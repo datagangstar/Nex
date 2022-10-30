@@ -855,8 +855,8 @@ class Nex:
 		messagePrompt = f'select operation: '
 		index = int(input(messagePrompt))
 
+		print(f'--- {feature[index]}') 
 		if index == 0: 
-			print(feature[index]) 
 			
 			for idx, x in enumerate(df.columns):
 				print(f'{idx}: {x}')
@@ -864,18 +864,20 @@ class Nex:
 			messagePrompt = f'select column: '
 			index = int(input(messagePrompt))
 		
-			groupDf = df.groupby(df.columns[index]).sum()
+			#groupDf = df.groupby(df.columns[index]).sum()
+			column = df.columns[index]
+			groupDf = df.groupby(column)["Amount"].sum()
 			print(groupDf.head())
 
-			
 		elif index == 1: 
-			print("letter is Grapes") 
-		
+			print(f'--- {feature[index]}') 
+
+
+			
 		elif index == 2:
-			print("fruit is Banana") 
-		
+			print(f'--- {feature[index]}') 
 		else: 
-			print("fruit isn't Banana, Mango or Grapes") 
+			print("--- try again") 
 		
 		#print(getattr(p1, option, lambda: p1.default)())
 		
