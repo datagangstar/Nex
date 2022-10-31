@@ -341,25 +341,63 @@ class Nex:
 		print('addTableColumn()')
 
 		df = self.tableDf
-
-		# # 
-		# messagePrompt = f'column name: '
-		# newColumn = input(messagePrompt)
-
-		# #
-		# messagePrompt = f'default value if any; "today" for todays date: '
-		# defaultValue = input(messagePrompt)
-
-		# if defaultValue == 'today':
-		# 	df[newColumn] = date.today().strftime("%m/%d/%Y")
-		# else: 
-		# 	df[newColumn] = defaultValue
-
-		# print(df)
-		# print(df.info())
 		
-		# self.importDf = df
+		# 
+		messagePrompt = f'column name: '
+		newColumn = input(messagePrompt)
+
+		#
+		messagePrompt = f'default value if any; "today" for todays date: '
+		defaultValue = input(messagePrompt)
+
+		if defaultValue == 'today':
+			df[newColumn] = date.today().strftime("%m/%d/%Y")
+		else: 
+			df[newColumn] = defaultValue
+
+		print(df)
+		print(df.info())
 		
+		self.tableDf = df
+		headers = self.tableDf.columns
+		
+		# todo - turn into func and prevent ID, created, modified from being edited
+		tempTableHeaderDf = pd.DataFrame()
+		for idx, x in enumerate(headers):
+			print(f'{idx}: {x}')
+
+			editable = ""
+			if x == 'ID':
+				editable = "FALSE"
+			elif x == 'created':
+				editable = "FALSE"
+			elif x == 'modified':
+				editable = "FALSE"
+			else:
+				editable = "TRUE"
+
+			headerRowDict = {
+			 "name": x,
+			 "dtype": 'str',
+			 "alias": x,
+			 "editable": editable
+			}
+
+			tempTableHeaderDf = pd.concat([tempTableHeaderDf, pd.DataFrame(headerRowDict, index=[0])], ignore_index = True)
+
+		self.tableHeaderDf = tempTableHeaderDf
+		print(self.tableHeaderDf)
+
+		# get table location
+		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
+		print(f'location: {source}')
+		
+		dataDf = self.tableDf.set_index('ID')
+		headersDf = self.tableHeaderDf.set_index('name')
+
+		with pd.ExcelWriter(f'datasets/{source}') as writer:
+			dataDf.to_excel(writer, sheet_name='data')
+			headersDf.to_excel(writer, sheet_name='headers')
 		
 		## END method ----------------------
 
@@ -417,9 +455,12 @@ class Nex:
 		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
 		print(f'location: {source}')
 		
+		dataDf = self.tableDf.set_index('ID')
+		headersDf = self.tableHeaderDf.set_index('name')
+
 		with pd.ExcelWriter(f'datasets/{source}') as writer:
-			self.tableDf.to_excel(writer, sheet_name='data')
-			self.tableHeaderDf.to_excel(writer, sheet_name='headers')
+			dataDf.to_excel(writer, sheet_name='data')
+			headersDf.to_excel(writer, sheet_name='headers')
 
 		# todo - create new file, archive old one in folder by table name; do same for imports
 		
@@ -471,7 +512,7 @@ class Nex:
 		
 		# select record
 		for index, row in self.tableDf.iterrows():
-			print(f'{index}: {row["name"]}')
+			print(f'{index}: {row}')
 
 		# get index input
 		prompt = f'Index to read: '
@@ -731,6 +772,8 @@ class Nex:
 		self.importDf = df
 
 		## END method ----------------------
+
+		
 	def performImport(self):
 		print('\n|\n|\n|')
 		print('performImport()')
@@ -831,8 +874,6 @@ class Nex:
 			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
 			self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
 
-	
-
 		# return to main menu
 		self.promptOptions = self.datasetsMethods
 		
@@ -872,10 +913,76 @@ class Nex:
 		elif index == 1: 
 			print(f'--- {feature[index]}') 
 
+			
+			for idx, x in enumerate(df.columns):
+				print(f'{idx}: {x}')
+	
+			messagePrompt = f'select column: '
+			tableHeaderValue = int(input(messagePrompt))
+			columnName = df.columns[tableHeaderValue]
+			
+			for index, row in df.iterrows():
+				print(f'{index}: {row}')
 
+			messagePrompt = f'select row: '
+			tableIndexSelection = int(input(messagePrompt))
+
+			picklist = ['Automotive','Bills & Utilities','Entertainment','Fees & Adjustments','Food & Drink','gas']
+
+			for idx, x in enumerate(picklist):
+				print(f'{idx}: {x}')
+	
+			messagePrompt = f'picklist: '
+			pickListIndex = int(input(messagePrompt))
+			picklistValue = picklist[pickListIndex]
+			print(f'picklistValue: {picklistValue}') 
+			
+
+			# set index
+			self.tableDf.loc[tableIndexSelection,columnName] = picklistValue
+			self.tableDf.loc[tableIndexSelection,'modified'] = date.today().strftime("%m/%d/%Y")
+			print(self.tableDf)
+
+			# make change and set modified date
+			source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
+			location = f'datasets/{source}'
+			print(f'location: {location}')
+
+			print(self.tableDf.loc[tableIndexSelection])
+		
+			dataDf = self.tableDf.set_index('ID')
+			headersDf = self.tableHeaderDf.set_index('name')
+			
+			with pd.ExcelWriter(f'datasets/{source}') as writer:
+				dataDf.to_excel(writer, sheet_name='data')
+				headersDf.to_excel(writer, sheet_name='headers')
+	
 			
 		elif index == 2:
 			print(f'--- {feature[index]}') 
+
+			df = self.tableDf
+			newDf = pd.DataFrame()
+
+			for index, row in df.iterrows():
+				print(f'{index}: {row["Reviewed"]}')
+				if row["Reviewed"] = False:
+					print(row)
+					
+					messagePrompt = f'picklist: '
+					pickListIndex = int(input(messagePrompt))
+					
+				#if x['Reviewed']
+	
+			# messagePrompt = f'select column: '
+			# index = int(input(messagePrompt))
+		
+			# #groupDf = df.groupby(df.columns[index]).sum()
+			# column = df.columns[index]
+			# groupDf = df.groupby(column)["Amount"].sum()
+			# print(groupDf.head())
+
+			
 		else: 
 			print("--- try again") 
 		
@@ -885,6 +992,7 @@ class Nex:
 
 	
 		
+	
 	
 	def backToDatasets(self):
 		print('\n|\n|\n|')
