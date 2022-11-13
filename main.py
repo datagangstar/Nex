@@ -11,7 +11,7 @@ import uuid
 from datetime import date
 import os
 from tabulate import tabulate
-import numpy
+import numpy as np
 
 # https://realpython.com/documenting-python-code/#docstrings-background
 
@@ -327,7 +327,7 @@ class Nex:
 		headersDf = self.tableHeaderDf
 		
 
-		features = ['viewCalories', 'updateBurn']
+		features = ['snippet','viewCalories','reportProgress','updateDay']
 
 		for idx, x in enumerate(features):
 			print(f'{idx}: {x}')
@@ -335,8 +335,30 @@ class Nex:
 		messagePrompt = f'select feature: '
 		index = int(input(messagePrompt))
 		print(f'------')
+
 		
 		if index == 0:
+			print('--- snippet()')
+			print('------')
+
+			df['date'] = pd.to_datetime(df['date'])
+			df['consumption'] = np.where(df['consumption'].isnull(), '0', df['consumption'])
+
+			
+			df['date'] = pd.to_datetime(df['date'])
+			df = df.sort_values(by='date', ascending=True)
+
+			print('------')
+
+			headersArray = [
+			 "date", "excercise", "consumption", "fat"
+			]
+			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+
+			# write new df to file
+			self.writeTableDftoFile(filename,df,headersDf)
+			
+		elif index == 1:
 			print('--- viewCalories()')
 			print('------')
 
@@ -353,10 +375,35 @@ class Nex:
 			 "date", "excercise", "consumption", "fat"
 			]
 			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			
 
+		elif index == 2:
+			print('--- reportProgress()')
+			print('------')
 
-		elif index == 1:
-			print('--- updateBurn()')
+			# setup calcs
+			actual = 35000
+			df['actual'] = 0
+			
+			for index, row in df.iterrows():
+				#print(f'{index}: {row["excercise"]}')
+
+				# calculate actual
+				ex = int(row["excercise"])
+				con = int(row["consumption"])
+				actual = actual + ex + con
+				#print(f'actual: {actual}')
+
+				# insert actual value into df
+				df['actual'][index] = actual
+
+			headersArray = [
+			 "date", "excercise", "consumption", "fat", "actual"
+			]
+			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+
+		elif index == 3:
+			print('--- updateDay()')
 
 			df['date'] = pd.to_datetime(df['date'])
 			df = df.sort_values(by='date', ascending=True)
@@ -654,7 +701,7 @@ class Nex:
 			#print(bool(filterDate))
 			
 			if bool(filterDate):
-				df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+				reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 				print(f'Filter Month: {filterDate}')
 			else:
 				print('no date filter')
@@ -667,7 +714,7 @@ class Nex:
 			 "Amount", "Description", "Expense", "Transaction Date",
 			 "Reviewed"
 			]
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
 			#print(df.info())
 
 			# select index
@@ -1085,42 +1132,6 @@ class Nex:
 
 		## END method ----------------------
 
-	def createRecord(self):
-		print('\n|\n|\n|')
-		print('createRecord()')
-
-		# todo - check if "name" already exists
-		# get dataset name
-		# messagePrompt = f'Name Record: '
-		# resDict = processUserInput(messagePrompt)
-		# #print(resDict)
-		# if resDict['valid']:
-		# 	value = str(resDict['value'])
-		# 	filename = f'{value}.xlsx'
-
-		# 	# todo - value to lowercase, replace spaces with _
-		# 	rowDict = {
-		# 	 "ID": uuid.uuid4(),
-		# 	 "created": date.today().strftime("%m/%d/%Y"),
-		# 	 "name": value
-		# 	}
-		# 	print(rowDict)
-
-		# 	# add row to datasets2
-		# 	self.tableDf = self.tableDf.append(rowDict, ignore_index=True)
-
-		# 	# get table location
-		# 	source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
-		# 	location = f'datasets/{source}'
-		# 	print(f'location: {location}')
-
-		# 	#safe dataset.xlsx
-		# 	with pd.ExcelWriter(location) as writer:
-		# 		self.tableDf.set_index('ID').to_excel(writer, sheet_name='data')
-		# 		self.tableHeaderDf.set_index('name').to_excel(writer, sheet_name='headers')
-
-		## END method ----------------------
-
 	
 	def readRecord(self):
 
@@ -1151,62 +1162,6 @@ class Nex:
 
 		## END method ----------------------
 
-	def updateRecord(self):
-
-		# select record
-		# name = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
-		# print(f'Table: {name}')
-
-		# select record
-		for index, row in self.tableDf.iterrows():
-			print(f'{index}: {row}')
-
-		# get index input
-		prompt = f'Select Record: '
-		tableIndexSelection = int(input(prompt))
-
-		# print table name
-		# name = self.tableDf.loc[tableIndexSelection, 'name']
-		# print(f'Record: {name}')
-
-		self.tableHeaderDf.replace({'editable': {'TRUE': True, 'FALSE': False}})
-
-		for index, row in self.tableHeaderDf.iterrows():
-			if row["editable"]:
-				print(f'{index}: {row["name"]}, {row["editable"]}')
-
-		# select attribute to update
-
-		# get index input
-		prompt = f'Column index to update: '
-		headerIndexSelection = int(input(prompt))
-		print(f'headerIndexSelection: {headerIndexSelection}')
-
-		print(self.tableHeaderDf)
-
-		tableHeaderValue = self.tableHeaderDf.loc[headerIndexSelection, 'name']
-		print(f'{tableIndexSelection}: {tableHeaderValue}')
-
-		prompt = f'new value: '
-		inputStr = input(prompt)
-		print(f'inputStr: {inputStr}')
-
-		self.tableDf.loc[tableIndexSelection, tableHeaderValue] = inputStr
-		self.tableDf.loc[tableIndexSelection,
-		                 'modified'] = date.today().strftime("%m/%d/%Y")
-		print(self.tableDf)
-
-		# make change and set modified date
-		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
-		location = f'datasets/{source}'
-		print(f'location: {location}')
-
-		# update dataset
-		with pd.ExcelWriter(location) as writer:
-			self.tableDf.set_index('ID').to_excel(writer, sheet_name='data')
-			self.tableHeaderDf.set_index('name').to_excel(writer, sheet_name='headers')
-
-		## END method ----------------------
 
 	def deleteRecord(self):
 		print('\n|\n|\n|')
@@ -1262,136 +1217,6 @@ class Nex:
 
 		## END method ----------------------
 
-	def importRecords(self):
-		print('\n|\n|\n|')
-		print('importRecords()')
-
-		# get import file name
-		# messagePrompt = f'Import File Name: '
-		# resDict = processUserInput(messagePrompt)
-		# #print(resDict)
-		# if resDict['valid']:
-		# 	filename = str(resDict['value'])
-
-		# 	location = f'imports/{filename}'
-		# 	print(f'location: {location}')
-
-		#self.importDf = pd.DataFrame(self.readDataToDf(location))
-
-		print('\n|\n|\n|')
-		print('importRecords()')
-		"""
-		Parameters
-		----------
-		name : str
-			The name of the animal
-		sound : str
-			The sound the animal makes
-		num_legs : int, optional
-			The number of legs the animal (default is 4)
-		
-		Steps
-		----------
-		- read file to dataframe
-		- clean operations
-			drop columns
-		- map columns to selected dataset
-		
-		 
-		"""
-
-		# get import file name
-		messagePrompt = f'Import File Name: '
-		resDict = processUserInput(messagePrompt)
-
-		self.promptOptions = pd.Series(
-		 ['creditImportMacro1885','creditImportMacro9901', 'mapColumn', 'addColumn', 'dropColumn', 'performImport',  'backToDatasets'])
-
-		#print(resDict)
-		if resDict['valid']:
-			testFilename = str(resDict['value'])
-
-			# get extension - Chase9901.csv, Export.csv
-			#testFilename = 'Chase1885.csv'
-			extension = testFilename.split(".")
-			print(extension)
-
-			location = f'imports/{testFilename}'
-			print(f'location: {location}')
-
-			# load by extension type
-			self.importDf = pd.read_csv(location)
-			#pd.options.display.max_rows = 9999
-
-			print(self.importDf)
-			print(self.importDf.info())
-
-		## END method ----------------------
-
-	# -------------
-	# import functions
-	# -------------
-
-	def creditImportMacro1885(self):
-		print('\n|\n|\n|')
-		print('creditImportMacro()')
-
-		df = self.importDf
-
-		# drop memo
-		print('drop')
-		df.drop('Memo', axis=1, inplace=True)
-
-		# add reviewed with default false
-		print('add')
-		df['Reviewed'] = "0"
-		df['Card'] = "1885"
-		df['Imported'] = date.today().strftime("%m/%d/%Y")
-
-		print('rename')
-		df.rename(columns={'Type': 'Kind'}, inplace=True)
-
-		print(df)
-		print(df.info())
-
-		self.importDf = df
-		
-
-		## END method ----------------------
-
-	def creditImportMacro9901(self):
-		print('\n|\n|\n|')
-		print('creditImportMacro()')
-
-		df = self.importDf
-
-		# drop memo
-		print('drop')
-		df.drop('Memo', axis=1, inplace=True)
-
-		# add reviewed with default false
-		print('add')
-		df['Reviewed'] = "0"
-		df['Card'] = "9901"
-		df['Imported'] = date.today().strftime("%m/%d/%Y")
-
-		print('rename')
-		df.rename(columns={'Type': 'Kind'}, inplace=True)
-
-		print(df)
-		print(df.info())
-
-		self.importDf = df
-		
-
-		## END method ----------------------
-		
-	def mapColumn(self):
-		print('\n|\n|\n|')
-		print('mapColumn()')
-
-		## END method ----------------------
-		
 	def addColumn(self):
 		print('\n|\n|\n|')
 		print('addColumn()')
@@ -1541,213 +1366,6 @@ class Nex:
 
 		## END method ----------------------
 
-	def performActions(self):
-		print('\n|\n|\n|')
-		print('tableSnippet()')
-
-		df = self.tableDf
-
-		feature = ['updateStatus', 'sumTotal', 'viewTrans']
-
-		for idx, x in enumerate(feature):
-			print(f'{idx}: {x}')
-
-		messagePrompt = f'select operation: '
-		index = int(input(messagePrompt))
-
-		#print(f'--- {feature[index]}')
-		if index == 0:
-
-			# for idx, x in enumerate(df.columns):
-			# 	print(f'{idx}: {x}')
-
-			# messagePrompt = f'select column: '
-			# index = int(input(messagePrompt))
-
-			#groupDf = df.groupby(df.columns[index]).sum()
-			#column = df.columns[index]
-			#df = df[df['Reviewed']]
-			#df = df.dropna(subset=['Reviewed'])
-			df = df.loc[df['Reviewed'] == 1]
-
-			groupDf = df.groupby('Expense')['Amount'].sum()
-			print(groupDf)
-
-		elif index == 1:
-			print(f'--- {feature[index]}')
-
-			for idx, x in enumerate(df.columns):
-				print(f'{idx}: {x}')
-
-			messagePrompt = f'select column: '
-			tableHeaderValue = int(input(messagePrompt))
-			columnName = df.columns[tableHeaderValue]
-
-			for index, row in df.iterrows():
-				print(f'{index}: {row}')
-
-			messagePrompt = f'select row: '
-			tableIndexSelection = int(input(messagePrompt))
-
-			picklist = [
-			 'Automotive', 'Bills & Utilities', 'Entertainment', 'Fees & Adjustments',
-			 'Food & Drink', 'gas'
-			]
-
-			for idx, x in enumerate(picklist):
-				print(f'{idx}: {x}')
-
-			messagePrompt = f'picklist: '
-			pickListIndex = int(input(messagePrompt))
-			picklistValue = picklist[pickListIndex]
-			print(f'picklistValue: {picklistValue}')
-
-			# set index
-			self.tableDf.loc[tableIndexSelection, columnName] = picklistValue
-			self.tableDf.loc[tableIndexSelection,
-			                 'modified'] = date.today().strftime("%m/%d/%Y")
-			print(self.tableDf)
-
-			# make change and set modified date
-			source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
-			location = f'datasets/{source}'
-			print(f'location: {location}')
-
-			print(self.tableDf.loc[tableIndexSelection])
-
-			dataDf = self.tableDf.set_index('ID')
-			headersDf = self.tableHeaderDf.set_index('name')
-
-			with pd.ExcelWriter(f'datasets/{source}') as writer:
-				dataDf.to_excel(writer, sheet_name='data')
-				headersDf.to_excel(writer, sheet_name='headers')
-
-		elif index == 2:
-			print(f'--- {feature[index]}')
-
-			df = self.tableDf
-			newDf = pd.DataFrame()
-
-			#df = df[df['Reviewed'] == True]
-			#df['Reviewed']
-			#df = df[df['Reviewed'] == True]
-			df = df.loc[df['Reviewed']]
-			df1 = df.groupby('Card')['Amount'].sum()
-			print(df1)
-
-		elif index == 3:
-			print(f'--- {feature[index]}')
-
-			df = self.tableDf
-
-			# for index, row in df.iterrows():
-			# 	print(f'{index}: {row["Amount"]} - {row["Description"]} {row["Category"]}')
-
-			print(df.info())
-			df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
-			df = df.sort_values(by='Transaction Date', ascending=True)
-
-			headersArray = [
-			 "Amount", "Description", "Expense", "Transaction Date", "Reviewed"
-			]
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
-			#print(df.info())
-
-		elif index == 4:
-			# reviewItem
-			# loop through records not reviewed,
-			print(f'--- {feature[index]}')
-
-			df = self.tableDf
-
-			df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
-			df = df.sort_values(by='Transaction Date', ascending=True)
-
-			headersArray = [
-			 "Amount", "Description", "Expense", "Transaction Date", "Category", "Kind",
-			 "Reviewed"
-			]
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
-			#print(df.info())
-
-			# select index
-			messagePrompt = f'select record: '
-			recordIndex = int(input(messagePrompt))
-
-			print(self.tableDf.loc[recordIndex])
-
-			#
-			expenseUniques = pd.Series(df['Expense'].unique())
-			#print(expenseUniques)
-			expenseTypes = pd.Series([
-			 'Transportation', 'Supplies', 'clothes', 'entertainment', 'eating out',
-			 'Gas', 'Groceries'
-			])
-			#print(expenseTypes)
-
-			expenseList = expenseUniques.append(expenseTypes)
-			#print(expenseList)
-
-			expenseList = expenseList.drop_duplicates()
-			expenseList = expenseList.dropna()
-			expenseList.index = range(0, len(expenseList))
-			#print(expenseList)
-
-			for idx, x in enumerate(expenseList):
-				print(f'{idx}: {x}')
-
-			print('----- select input type')
-
-			# type of input
-			actionOptions = ['input new', 'select type']
-
-			for idx, x in enumerate(actionOptions):
-				print(f'{idx}: {x}')
-
-			messagePrompt = f'select Expense type: '
-			actionIndex = int(input(messagePrompt))
-
-			newValue = ''
-
-			if actionIndex == 0:
-				messagePrompt = f'enter type: '
-				typeValue = input(messagePrompt)
-				print(typeValue)
-				newValue = typeValue
-
-			else:
-
-				messagePrompt = f'select Expense id: '
-				expenseIndex = int(input(messagePrompt))
-
-				newValue = expenseList[expenseIndex]
-
-			print(f'newValue: {newValue}')
-
-			# update Expense Type
-			# set as reviewed
-			self.tableDf.loc[recordIndex, 'Expense'] = newValue
-			self.tableDf.loc[recordIndex,
-			                 'modified'] = date.today().strftime("%m/%d/%Y")
-			self.tableDf.loc[recordIndex, 'Reviewed'] = True
-			print(self.tableDf.loc[recordIndex])
-
-			# make change and set modified date
-			source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
-			location = f'datasets/{source}'
-			print(f'location: {location}')
-
-			# update dataset
-			with pd.ExcelWriter(location) as writer:
-				self.tableDf.set_index('ID').to_excel(writer, sheet_name='data')
-				self.tableHeaderDf.set_index('name').to_excel(writer, sheet_name='headers')
-
-		else:
-			print("--- try again")
-
-		#print(getattr(p1, option, lambda: p1.default)())
-
-		## END method ----------------------
 
 	def renameColumn(self):
 		print('\n|\n|\n|')
@@ -1863,124 +1481,6 @@ class Nex:
 
 		## END method ----------------------
 
-	# 	## END method ----------------------
-
-	# def getDf(self):
-	# 	return self.df
-
-	# 	## END method ----------------------
-
-	# def getSumbyColumn(self):
-	# 	column = 'calories'
-	# 	return self.df[column].sum()
-
-	# 	## END method ----------------------
-
-	# def printDfInfo(self):
-	# 	print(self.df.info())
-
-	# 	## END method ----------------------
-
-	# def printDfHead(self):
-	# 	print(self.df.head())
-
-	# 	## END method ----------------------
-
-	# def printList(self):
-	# 	return print(self.df[['type', 'calories']])
-
-	# 	## END method ----------------------
-
-	#
-	# table CRUD
-	#
-
-	def addItem(self):
-		print('\n|\n|\n|')
-		print('addItem()')
-
-		headers = list(self.df)
-		print(headers)
-
-		rowDict = dict()
-		for x in headers:
-			print(x)
-			prompt = f'Input value for "{x}": '
-			inputValue = input(prompt)
-			rowDict[x] = inputValue
-
-		print(rowDict)
-		self.df = self.df.append(rowDict, ignore_index=True)
-		print(self.df.head())
-
-		# inputMessagePrompt = 'Select option:'
-		# optionNumber = int(input(inputMessagePrompt))
-
-		print('------------')
-		## END method ----------------------
-
-	def removeItem(self):
-		print('\n|\n|\n|')
-		print('removeItem()')
-		indexDf = self.df.reset_index()
-
-		for index, row in indexDf.iterrows():
-			print(f'{index}: {row["type"]}')
-
-		prompt = f'Index to delete: '
-		indexSelection = int(input(prompt))
-
-		self.df = self.df.drop(indexSelection)
-		# self.df = newDF.reset_index()
-		print(self.df.head())
-
-		## END method ----------------------
-
-	def editItem(self):
-		print('\n|\n|\n|')
-		print('editItem()')
-		indexDf = self.df.reset_index()
-
-		print(self.df.head())
-
-		indexPrompt = f'Index to edit: '
-		indexSelection = int(input(indexPrompt))
-
-		columns = self.df.columns
-		rowDict = dict()
-		for idx, x in enumerate(columns):
-			print(f'{idx}: {x}')
-			rowDict[idx] = x
-
-		columnPrompt = f'Index to edit: '
-		columnSelection = int(input(columnPrompt))
-
-		print(f'selected row: {indexSelection}, column: {columnSelection}')
-
-		valuePrompt = f'change to: '
-		value = int(input(valuePrompt))
-
-		self.df.iloc[indexSelection,
-		             self.df.columns.get_loc(rowDict[columnSelection])] = value
-
-		print(self.df.head())
-
-		## END method ----------------------
-
-	# def returnUserInfo(self, user_id):
-	#     # https://pythonguides.com/case-statement-in-python/#:~:text=Switch%20case%20in%20Python%20with%20user%20input,-Let%20us%20see&text=The%20user_id%20is%20passed%20to,in%20the%20switch%20case%20statement.
-
-	#     user_info = {
-	#         1001: 'James',
-	#         1002: 'Rosy',
-	#         1003: 'Ben',
-	#         1004: 'John',
-	#         1005: 'Mary'
-	#     }
-	#     return user_info.get(user_id, 'Invalid User ID')
-
-	# def myfunc(self):
-	#     print("Hello my name is " + self.name)
 
 
 # --- END CLASS ------------------------------------------------------------------------ #
