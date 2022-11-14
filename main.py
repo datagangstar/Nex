@@ -10,8 +10,9 @@ import matplotlib.pyplot as plt
 import uuid
 from datetime import date
 import os
-from tabulate import tabulate
+from tabulate import tabulate # printing tables
 import numpy as np
+import ast # string arrays to array
 
 # https://realpython.com/documenting-python-code/#docstrings-background
 
@@ -39,14 +40,15 @@ class Nex:
 		self.settingsDict = {}
 
 		self.datasetsMethods = pd.Series([
+			'snippetDatasets',
 			'printDatasets',
+			'viewDataset',
 			'readDataset',  # todo - load dataset, view attributes in list
 			'createDataset',
 			#'renameDataset',  # not used
 			'deleteDataset',
-			'snippetTest',
-			'runTransactionsApplication',
-			'runBodyFatApp'
+			'runBodyFatApp',
+			'runTransactionsApplication'
 		])
 
 		self.tableMethods = pd.Series([
@@ -131,9 +133,68 @@ class Nex:
 	# datasets methods
 	# -------------
 
-	def printDatasets(self):
-		print(self.datasetsDf)
+	def snippetDatasets(self):
 
+		headers = self.datasetsDf.columns
+		print(headers)
+
+		headerDict = dict()
+		for idx, x in enumerate(headers):
+			headerDict[idx]['name'] = x
+			if x == 'name':
+				headerDict[idx]['dtype'] = 'str'
+			else:
+				headerDict[idx]['dtype'] = 'int'
+			headerDict[idx]['alias'] = x
+			if x == 'name':
+				headerDict[idx]['editable'] = 'True'
+			else:
+				headerDict[idx]['editable'] = 'False'
+			headerDict[idx]['picklist'] = ''
+
+		print(headerDict)
+
+	## END method ----------------------
+
+		
+	def snippetTest(self):
+
+		headers = self.datasetsDf.columns
+		print(headers)
+
+		headerDict = dict()
+		for idx, x in enumerate(headers):
+			headerDict[idx]['name'] = x
+			if x == 'name':
+				headerDict[idx]['dtype'] = 'str'
+			else:
+				headerDict[idx]['dtype'] = 'int'
+			headerDict[idx]['alias'] = x
+			if x == 'name':
+				headerDict[idx]['editable'] = 'True'
+			else:
+				headerDict[idx]['editable'] = 'False'
+			headerDict[idx]['picklist'] = ''
+
+		print(headerDict)
+
+	## END method ----------------------
+
+
+
+	def printDatasets(self):
+
+		# datasets schema
+		print(self.datasetsDf.info())
+
+		# show table
+		headersArray = [
+		 "created", "modified", "name", "source", "default_table"
+		]
+		print(tabulate(self.datasetsDf[headersArray], headersArray, tablefmt='psql'))
+
+		# head table
+		print(self.headersDf)
 		
 		# headersArray = [
 		#  "Amount", "Description", "Expense", "Transaction Date", "Reviewed"
@@ -143,6 +204,51 @@ class Nex:
 		# todo - check dataset exists, get total & report
 
 		## END method ----------------------
+		
+	def viewDataset(self):
+		print('\n|\n|\n|')
+		print('viewDataset()')
+
+		# list dataset options
+		for index, row in self.datasetsDf.iterrows():
+			print(f'{index}: {row["name"]}')
+
+		# get index input
+		inputMessagePrompt = f'Select Dataset: '
+		indexSelection = int(input(inputMessagePrompt))
+
+		# set state
+		self.selectedDatasetIndex = indexSelection
+
+		# build location
+		source = self.datasetsDf.loc[indexSelection, 'source']
+		location = f'datasets/{source}'
+		
+		# read to dataframe using helper functions
+		self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+
+		# get table view headers
+		headersArray = self.getTableDefaultHeaders()
+		
+		# viewHeaders = self.datasetsDf.loc[indexSelection, 'default_table']
+		# print(viewHeaders)
+		# a_list = ast.literal_eval(viewHeaders)
+		#viewheadersArr = viewHeaders[1:-1].split(',')
+
+		print(tabulate(self.tableDf[headersArray], headersArray, tablefmt='psql'))
+			
+		## END method ----------------------
+		
+	def getTableDefaultHeaders(self):
+
+		viewHeaders = self.datasetsDf.loc[self.selectedDatasetIndex, 'default_table']
+		viewHeadersArray = ast.literal_eval(viewHeaders)
+
+		return viewHeadersArray
+		
+		## END method ----------------------
+		
 		
 	def readDataset(self):
 		print('\n|\n|\n|')
@@ -312,6 +418,7 @@ class Nex:
 		index = self.datasetsDf[self.datasetsDf['name'] == 'calories'].index
 		self.selectedDatasetIndex = index[0]
 		#print(index[0])
+
 		
 		filename = self.datasetsDf.loc[index[0], 'source']
 		print(filename)
@@ -351,7 +458,7 @@ class Nex:
 			print('------')
 
 			headersArray = [
-			 "date", "excercise", "consumption", "fat"
+			 'date', 'excercise', 'consumption', 'fat'
 			]
 			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 
@@ -371,9 +478,13 @@ class Nex:
 
 			print('------')
 
-			headersArray = [
-			 "date", "excercise", "consumption", "fat"
-			]
+			# headersArray = [
+			#  "date", "excercise", "consumption", "fat"
+			# ]
+			
+			# get table view headers
+			headersArray = self.getTableDefaultHeaders()
+		
 			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 			
 
@@ -538,7 +649,7 @@ class Nex:
 		index = int(input(messagePrompt))
 		print(f'------')
 
-		#print(f'--- {feature[index]}')
+		
 		if index == 0:
 			print('sumGroup()')
 			print('------')
@@ -679,9 +790,11 @@ class Nex:
 
 			print('------')
 
-			headersArray = [
-			 "Amount", "Description", "Expense", "Transaction Date", "Reviewed", "Card"
-			]
+			# headersArray = [
+			#  'Amount', 'Description', 'Expense', 'Transaction Date', 'Reviewed', 'Card'
+			# ]
+			headersArray = self.getTableDefaultHeaders()
+			
 			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 			#print(df.info())
 
@@ -953,30 +1066,6 @@ class Nex:
 
 
 	
-	def snippetTest(self):
-
-		headers = self.datasetsDf.columns
-		print(headers)
-
-		headerDict = dict()
-		for idx, x in enumerate(headers):
-			headerDict[idx]['name'] = x
-			if x == 'name':
-				headerDict[idx]['dtype'] = 'str'
-			else:
-				headerDict[idx]['dtype'] = 'int'
-			headerDict[idx]['alias'] = x
-			if x == 'name':
-				headerDict[idx]['editable'] = 'True'
-			else:
-				headerDict[idx]['editable'] = 'False'
-			headerDict[idx]['picklist'] = ''
-
-		print(headerDict)
-
-	## END method ----------------------
-
-
 
 
 
