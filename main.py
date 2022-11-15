@@ -47,13 +47,20 @@ class Nex:
 			'createDataset',
 			#'renameDataset',  # not used
 			'deleteDataset',
+			'runStocksApp',
+			'runDonationApp',
 			'runBodyFatApp',
 			'runTransactionsApplication'
 		])
 
 		self.tableMethods = pd.Series([
-		 'printTable','addTableColumn','renameColumn','dropTableColumn',
-		 'readRecord','deleteRecord','backToDatasets'
+		 	'printTable',
+			'addTableColumn',
+			'renameColumn',
+			'dropTableColumn',
+			'readRecord',
+			'deleteRecord',
+			'backToDatasets'
 		])
 
 		self.promptOptions = self.datasetsMethods
@@ -406,6 +413,196 @@ class Nex:
 			self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
 
 	## END method ----------------------
+
+
+
+	
+	def runStocksApp(self):
+		print('\n|\n|\n|')
+		print('runStocksApp()')
+
+		# build filename
+		index = self.datasetsDf[self.datasetsDf['name'] == 'stocks'].index
+		self.selectedDatasetIndex = index[0]
+
+		filename = self.datasetsDf.loc[index[0], 'source']
+		print(filename)
+		
+		location = f'datasets/{filename}'
+		print(location)
+		
+		# read to dataframe using helper functions
+		self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		df = self.tableDf
+
+		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		headersDf = self.tableHeaderDf
+		
+
+		features = ['snippet','viewStocks','addStock']
+
+		for idx, x in enumerate(features):
+			print(f'{idx}: {x}')
+
+		messagePrompt = f'select feature: '
+		index = int(input(messagePrompt))
+		print(f'------')
+
+		
+		if index == 0:
+			print('--- snippet()')
+			print('------')
+
+			# df['date'] = pd.to_datetime(df['date'])
+			# df['consumption'] = np.where(df['consumption'].isnull(), '0', df['consumption'])
+
+			
+			# df['date'] = pd.to_datetime(df['date'])
+			# df = df.sort_values(by='date', ascending=True)
+
+			# print('------')
+
+			# headersArray = [
+			#  'date', 'excercise', 'consumption', 'fat'
+			# ]
+			# print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+
+			# # write new df to file
+			# self.writeTableDftoFile(filename,df,headersDf)
+			
+		elif index == 1:
+			print('--- viewStocks()')
+			print('------')
+
+			#print(df.info())
+			# df['date'] = pd.to_datetime(df['date'])
+			# df = df.sort_values(by='date', ascending=True)
+
+			print('------')
+
+			headersArray = [
+			 "stock", "qty"
+			]
+			
+			# get table view headers
+			#headersArray = self.getTableDefaultHeaders()
+		
+			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			
+		elif index == 2:
+			print('--- addStock()')
+			print('------')
+
+			requiredColumn = 'symbol'
+
+			
+			messagePrompt = f'Name symbol: '
+			resDict = processUserInput(messagePrompt)
+			
+			if resDict['valid']:
+				value = str(resDict['value'])
+			
+			rowDict = {
+			 "ID": uuid.uuid4(),
+			 "created": date.today().strftime("%m/%d/%Y"),
+			 "modified": "",
+			 "symbol": value
+			}
+			
+			print(rowDict)
+
+			rowDf = pd.DataFrame(rowDict, index=[0])
+
+			self.tableDf = pd.concat([df, rowDf], ignore_index=True)
+			print(self.tableDf)
+
+		else:
+			print("--- try again")
+
+	## END method ----------------------
+
+
+	
+
+	
+	def runDonationApp(self):
+		print('\n|\n|\n|')
+		print('runDonationApp()')
+
+		# build filename
+		index = self.datasetsDf[self.datasetsDf['name'] == 'donations'].index
+		self.selectedDatasetIndex = index[0]
+
+		filename = self.datasetsDf.loc[index[0], 'source']
+		print(filename)
+		
+		location = f'datasets/{filename}'
+		print(location)
+		
+		# read to dataframe using helper functions
+		self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		df = self.tableDf
+
+		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		headersDf = self.tableHeaderDf
+		
+
+		features = ['snippet','getTotal']
+
+		for idx, x in enumerate(features):
+			print(f'{idx}: {x}')
+
+		messagePrompt = f'select feature: '
+		index = int(input(messagePrompt))
+		print(f'------')
+
+		
+		if index == 0:
+			print('--- snippet()')
+			print('------')
+
+			# df['date'] = pd.to_datetime(df['date'])
+			# df['consumption'] = np.where(df['consumption'].isnull(), '0', df['consumption'])
+
+			
+			# df['date'] = pd.to_datetime(df['date'])
+			# df = df.sort_values(by='date', ascending=True)
+
+			# print('------')
+
+			# headersArray = [
+			#  'date', 'excercise', 'consumption', 'fat'
+			# ]
+			# print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+
+			# # write new df to file
+			# self.writeTableDftoFile(filename,df,headersDf)
+			
+		elif index == 1:
+			print('--- getTotal()')
+			print('------')
+
+			# #print(df.info())
+			# df['date'] = pd.to_datetime(df['date'])
+			# df = df.sort_values(by='date', ascending=True)
+
+			# print('------')
+
+			# # headersArray = [
+			# #  "date", "excercise", "consumption", "fat"
+			# # ]
+			
+			# # get table view headers
+			# headersArray = self.getTableDefaultHeaders()
+		
+			# print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			
+
+		else:
+			print("--- try again")
+
+	## END method ----------------------
+
 
 	
 	def runBodyFatApp(self):
@@ -817,6 +1014,7 @@ class Nex:
 				reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 				print(f'Filter Month: {filterDate}')
 			else:
+				reportDf = df
 				print('no date filter')
 
 			print('------')
@@ -987,7 +1185,7 @@ class Nex:
 			# add reviewed with default false
 			print('add')
 			df['Imported'] = date.today().strftime("%m/%d/%Y")
-			df['Card'] = "1885"
+			df['Card'] = "Sapphire"
 			df['Reviewed'] = "0"
 			df['Expense'] = ""
 	
