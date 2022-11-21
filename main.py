@@ -56,7 +56,7 @@ class Nex:
 		self.tableMethods = pd.Series([
 		 	'printTable',
 			'addTableColumn',
-			'renameColumn',
+			#'renameColumn',
 			'dropTableColumn',
 			'readRecord',
 			'deleteRecord',
@@ -68,6 +68,25 @@ class Nex:
 		## END method ----------------------
 
 
+
+	# called externally
+	def getPromptOptions(self):
+		return self.promptOptions
+
+	# called externally but doing nothing but creating a space
+	def getNavigation(self):
+		str = ''
+		# if not self.selectedRecordIndex:
+		# 	datasetname = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
+		# 	str = f'Navigation: {datasetname}'
+		# else:
+		# 	datasetname = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
+		# 	tablename = self.datasetsDf.loc[self.selectedRecordIndex, 'name']
+		# 	str = f'Navigation: {datasetname} / {tablename}'
+
+		return str
+		## END method ----------------------
+	
 		
 	# -------------
 	# datasets init
@@ -117,53 +136,9 @@ class Nex:
 		## END method ----------------------
 			
 
-	# called externally
-	def getPromptOptions(self):
-		return self.promptOptions
-
-	# called externally but doing nothing but creating a space
-	def getNavigation(self):
-		str = ''
-		# if not self.selectedRecordIndex:
-		# 	datasetname = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
-		# 	str = f'Navigation: {datasetname}'
-		# else:
-		# 	datasetname = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
-		# 	tablename = self.datasetsDf.loc[self.selectedRecordIndex, 'name']
-		# 	str = f'Navigation: {datasetname} / {tablename}'
-
-		return str
-		## END method ----------------------
-	
-
 	# -------------
 	# datasets methods
 	# -------------
-
-	def snippetDatasets(self):
-
-		headers = self.datasetsDf.columns
-		print(headers)
-
-		headerDict = dict()
-		for idx, x in enumerate(headers):
-			headerDict[idx]['name'] = x
-			if x == 'name':
-				headerDict[idx]['dtype'] = 'str'
-			else:
-				headerDict[idx]['dtype'] = 'int'
-			headerDict[idx]['alias'] = x
-			if x == 'name':
-				headerDict[idx]['editable'] = 'True'
-			else:
-				headerDict[idx]['editable'] = 'False'
-			headerDict[idx]['picklist'] = ''
-
-		print(headerDict)
-
-	## END method ----------------------
-
-		
 	def snippetTest(self):
 
 		headers = self.datasetsDf.columns
@@ -189,36 +164,59 @@ class Nex:
 
 
 
+
+	
+	def snippetDatasets(self):
+		print('snippetDatasets()')
+
+		headers = self.datasetsDf.columns
+		print(headers)
+
+	## END method ----------------------
+
+	
 	def printDatasets(self):
+		print('\n')
+		print('printDatasets()')
+		print('---------')
 
 		# datasets schema
 		print(self.datasetsDf.info())
 
-		# show table
-		headersArray = [
-		 "created", "modified", "name", "source", "default_table"
-		]
-		print(tabulate(self.datasetsDf[headersArray], headersArray, tablefmt='psql'))
-
 		# head table
 		print(self.headersDf)
 		
-		# headersArray = [
-		#  "Amount", "Description", "Expense", "Transaction Date", "Reviewed"
-		# ]
-		# print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+		# show table
+		headersArray = [
+		 "created", "modified", "name", "source"
+		]
+		
+		#print(tabulate(self.datasetsDf[headersArray], headersArray, tablefmt='psql'))
 
-		# todo - check dataset exists, get total & report
+		self.printFormattedTable(self.datasetsDf,headersArray)
 
 		## END method ----------------------
+
+	
+	def printFormattedTable(self,df,headersArray):
+		
+		print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+
+		## END method ----------------------
+
 		
 	def viewDataset(self):
-		print('\n|\n|\n|')
+		print('\n')
 		print('viewDataset()')
+		print('---------')
 
+		# --- show dataset options
+		
 		# list dataset options
 		for index, row in self.datasetsDf.iterrows():
 			print(f'{index}: {row["name"]}')
+
+		# --- selectDataset(): get input, set selected dataset, 
 
 		# get index input
 		inputMessagePrompt = f'Select Dataset: '
@@ -235,6 +233,8 @@ class Nex:
 		self.tableDf = pd.DataFrame(self.readDataToDf(location))
 		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
 
+		# ---
+		
 		# get table view headers
 		headersArray = self.getTableDefaultHeaders()
 		
@@ -243,9 +243,11 @@ class Nex:
 		# a_list = ast.literal_eval(viewHeaders)
 		#viewheadersArr = viewHeaders[1:-1].split(',')
 
-		print(tabulate(self.tableDf[headersArray], headersArray, tablefmt='psql'))
+		self.printFormattedTable(self.tableDf,headersArray)
+		
 			
 		## END method ----------------------
+
 		
 	def getTableDefaultHeaders(self):
 
@@ -258,13 +260,18 @@ class Nex:
 		
 		
 	def readDataset(self):
-		print('\n|\n|\n|')
+		print('\n')
 		print('readDataset()')
+		print('---------')
 
+		# --- show dataset options
+		
 		# list dataset options
 		for index, row in self.datasetsDf.iterrows():
 			print(f'{index}: {row["name"]}')
 
+		# --- selectDataset(): get input, set selected dataset, 
+			
 		# get index input
 		inputMessagePrompt = f'Select Dataset: '
 		indexSelection = int(input(inputMessagePrompt))
@@ -275,6 +282,8 @@ class Nex:
 		# build location
 		source = self.datasetsDf.loc[indexSelection, 'source']
 		location = f'datasets/{source}'
+		
+		# --- load selected table
 		
 		# read to dataframe using helper functions
 		self.tableDf = pd.DataFrame(self.readDataToDf(location))
@@ -287,12 +296,17 @@ class Nex:
 
 		
 	def createDataset(self):
-		print('\n|\n|\n|')
+		print('\n')
 		print('createDataset()')
+		print('---------')
 
+		# --- get input
+		
 		# todo - check if "name" already exists
 		messagePrompt = f'Name Dataset: '
 		resDict = processUserInput(messagePrompt)
+		
+		# --- build table
 		
 		if resDict['valid']:
 			
@@ -358,9 +372,13 @@ class Nex:
 				#headersDf = pd.concat([headersDf, headerRowDict], ignore_index=True)
 				headersDf = headersDf.append(headerRowDict, ignore_index=True)
 
+		# --- write table
+
 			# write new df to file
 			self.writeTableDftoFile(filename,dataDf,headersDf)
 
+		# --- update datasets
+			
 			# update datesets file
 			with pd.ExcelWriter(f'datasets.xlsx') as writer:
 				self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
@@ -370,20 +388,26 @@ class Nex:
 
 	
 	def renameDataset(self):
-		print('\n|\n|\n|')
-		print('updateDataset()')
+		print('\n')
+		print('renameDataset()')
+		print('---------')
 
 	## END method ----------------------
 
 	
 	def deleteDataset(self):
-		print('\n|\n|\n|')
+		print('\n')
 		print('deleteDataset()')
+		print('---------')
 
+		# --- show dataset options
+		
 		# print options
 		for index, row in self.datasetsDf.iterrows():
 			print(f'{index}: {row["name"]}')
 
+		# --- remove table files
+			
 		# get index input
 		prompt = f'Index to delete: '
 		indexSelection = int(input(prompt))
@@ -403,10 +427,15 @@ class Nex:
 		self.datasetsDf = self.datasetsDf.drop(indexSelection)
 		#print(self.datasetsDf.head())
 
+		# --- ???
+		
 		# reindex
 		self.datasetsDf = self.datasetsDf.reset_index(drop=True)
 		#print(self.datasetsDf.head())
 
+		
+		# --- update dataset
+		
 		# safe dataset.xlsx
 		with pd.ExcelWriter(f'datasets.xlsx') as writer:
 			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
@@ -418,8 +447,11 @@ class Nex:
 
 	
 	def runStocksApp(self):
-		print('\n|\n|\n|')
-		print('runStocksApp()')
+		print('\n')
+		print('deleteDataset()')
+		print('---------')
+
+		# --- select table
 
 		# build filename
 		index = self.datasetsDf[self.datasetsDf['name'] == 'stocks'].index
@@ -438,16 +470,20 @@ class Nex:
 		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
 		headersDf = self.tableHeaderDf
 		
+		# --- build select options
 
 		features = ['snippet','viewStocks','addStock']
 
 		for idx, x in enumerate(features):
 			print(f'{idx}: {x}')
 
+		# --- select options
+			
 		messagePrompt = f'select feature: '
 		index = int(input(messagePrompt))
 		print(f'------')
 
+		# --- filter methods
 		
 		if index == 0:
 			print('--- snippet()')
@@ -481,7 +517,7 @@ class Nex:
 			print('------')
 
 			headersArray = [
-			 "stock", "qty"
+			 "symbol", "qty"
 			]
 			
 			# get table view headers
@@ -829,13 +865,13 @@ class Nex:
 		#features = ['viewTrans', 'sumTotal', 'SumTotalByCard', 'filterDateRange', 'reviewItem', 'reviewItem']
 
 		# todo - make a dictionary of features, actions, and settings
-		thisdict = {
-  			"viewTrans": "Ford",
-		  	"sumTotal": "Mustang",
-		  	"SumTotalByCard": "Mustang",
-		  	"actions": "reviewItem",
-		  	"settings": "filterDateRange"
-		}
+		# thisdict = {
+  # 			"viewTrans": "Ford",
+		#   	"sumTotal": "Mustang",
+		#   	"SumTotalByCard": "Mustang",
+		#   	"actions": "reviewItem",
+		#   	"settings": "filterDateRange"
+		# }
 
 		features = ['sumGroup', 'updateStatus', 'sumTotal', 'viewTrans', 'reviewItem', 'filterDateRange','creditImportMacroAmazon','creditImportMacroSapphire','mechanicsImportMacro']
 
@@ -1288,6 +1324,8 @@ class Nex:
 		print('\n|\n|\n|')
 		print('addTableColumn()')
 
+		# --- get input
+		
 		df = self.tableDf
 
 		#
@@ -1298,6 +1336,8 @@ class Nex:
 		messagePrompt = f'default value if any; "today" for todays date: '
 		defaultValue = input(messagePrompt)
 
+		# --- add column
+		
 		if defaultValue == 'today':
 			df[newColumn] = date.today().strftime("%m/%d/%Y")
 		else:
@@ -1306,6 +1346,8 @@ class Nex:
 		print(df)
 		print(df.info())
 
+		# --- build headers
+		
 		self.tableDf = df
 		headers = self.tableDf.columns
 
@@ -1339,6 +1381,8 @@ class Nex:
 		self.tableHeaderDf = tempTableHeaderDf
 		print(self.tableHeaderDf)
 
+		# --- update table
+		
 		# get table location
 		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
 		print(f'location: {source}')
@@ -1352,25 +1396,34 @@ class Nex:
 
 		## END method ----------------------
 
+	
 	def dropTableColumn(self):
 		print('\n|\n|\n|')
 		print('dropTableColumn()')
 
 		df = self.tableDf
 
+		# --- show column options
+		
 		for idx, x in enumerate(df.columns):
 			print(f'{idx}: {x}')
 
+		# --- get input
+			
 		#
 		messagePrompt = f'column to drop: '
 		index = int(input(messagePrompt))
 
+		# --- drop column
+		
 		df.drop(df.columns[index], axis=1, inplace=True)
 		#df.drop(colName, axis=1, inplace=True)
 
 		print(df.head())
 		print(df.info())
 
+		# --- build headers
+		
 		self.tableDf = df
 		headers = self.tableDf.columns
 
@@ -1404,6 +1457,8 @@ class Nex:
 		self.tableHeaderDf = tempTableHeaderDf
 		print(self.tableHeaderDf)
 
+		# --- update table
+		
 		# get table location
 		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
 		print(f'location: {source}')
@@ -1426,10 +1481,14 @@ class Nex:
 		name = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
 		print(f'Table: {name}')
 
+		# --- show table
+		
 		# select record
 		for index, row in self.tableDf.iterrows():
 			print(f'{index}: {row}')
 
+		# --- get input
+			
 		# get index input
 		prompt = f'Index to read: '
 		indexSelection = int(input(prompt))
@@ -1438,8 +1497,11 @@ class Nex:
 		# name = self.tableDf.loc[indexSelection, 'name']
 		# print(f'Record: {name}')
 
+		# --- set selection
 		self.selectedRecordIndex = indexSelection
 
+		# --- loop fields
+		
 		for index, row in self.tableHeaderDf.iterrows():
 			print(f'{row["name"]}: {self.tableDf.loc[indexSelection, row["name"]]}')
 			#print(f'{row}: {self.tableDf.loc[indexSelection, row["name"]]}')
@@ -1460,6 +1522,8 @@ class Nex:
 		# for index, row in self.tableDf.iterrows():
 		# 	print(f'{index}: {row}')
 
+		# --- apply date filter
+		
 		df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
 		df = df.sort_values(by='Transaction Date', ascending=True)
 
@@ -1467,8 +1531,14 @@ class Nex:
 		 "Amount", "Description", "Expense", "Transaction Date",
 		 "Reviewed"
 		]
-		print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
-
+		
+		# --- show options
+		
+		#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+		self.printFormattedTable(df,headersArray)
+		
+		# --- get input
+		
 		# get index input
 		prompt = f'Index to delete: '
 		indexSelection = int(input(prompt))
@@ -1482,6 +1552,8 @@ class Nex:
 		# else:
 		# 	print("The file does not exist")
 
+		# --- drop record
+		
 		# remove from dataset
 		df = df.drop(indexSelection)
 		print(df.head())
@@ -1492,6 +1564,8 @@ class Nex:
 
 		self.tableDf = df
 
+		# --- update table
+		
 		# get table location
 		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
 		location = f'datasets/{source}'
@@ -1504,6 +1578,22 @@ class Nex:
 
 		## END method ----------------------
 
+
+
+
+
+
+
+
+
+
+
+
+	# -------------
+	# table CRUD - NOT USED
+	# -------------
+
+	
 	def addColumn(self):
 		print('\n|\n|\n|')
 		print('addColumn()')
@@ -1518,6 +1608,7 @@ class Nex:
 		messagePrompt = f'default value if any; "today" for todays date: '
 		defaultValue = input(messagePrompt)
 
+		
 		if defaultValue == 'today':
 			df[newColumn] = date.today().strftime("%m/%d/%Y")
 		else:
@@ -1529,6 +1620,8 @@ class Nex:
 		self.importDf = df
 
 		## END method ----------------------
+
+		
 	def dropColumn(self):
 		print('\n|\n|\n|')
 		print('dropColumn()')
@@ -1552,10 +1645,13 @@ class Nex:
 
 		## END method ----------------------
 
+	
 	def performImport(self):
 		print('\n|\n|\n|')
 		print('performImport()')
 
+		# --- get import df
+		
 		df = self.importDf
 
 		importColumns = df.columns
@@ -1564,6 +1660,8 @@ class Nex:
 		newDf = pd.DataFrame()
 		newDf = self.tableDf
 
+		# --- loop df and build records
+		
 		for index, row in df.iterrows():
 			print(f'{index}: {row}')
 
@@ -1599,6 +1697,8 @@ class Nex:
 
 		self.tableDf = newDf
 
+		# --- build headers
+		
 		# get headers from new df
 		headers = self.tableDf.columns
 		print(headers)
@@ -1626,6 +1726,8 @@ class Nex:
 		
 		print(self.tableDf)
 
+		# --- create tables
+		
 		# safe dataset
 		self.tableDf = self.tableDf.set_index('ID')
 		self.tableHeaderDf = self.tableHeaderDf.set_index('name')
@@ -1644,6 +1746,8 @@ class Nex:
 		self.datasetsDf.loc[self.selectedDatasetIndex, 'source'] = filename
 		#print(self.datasetsDf.loc[self.selectedDatasetIndex,:])
 
+		# --- update datasets
+		
 		with pd.ExcelWriter(f'datasets.xlsx') as writer:
 			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
 			self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
@@ -1738,8 +1842,13 @@ class Nex:
 	def f(d, a, b):
 		d.ix[d[a] == b, 'data1'].sum()
 
+
+
+
+
+		
 	# -------------
-	# helper functions
+	# helper functions - NOT USED
 	# -------------
 
 	def readCSVtoDataframe(self, location):
