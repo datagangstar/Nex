@@ -873,7 +873,7 @@ class Nex:
 		#   	"settings": "filterDateRange"
 		# }
 
-		features = ['sumGroup', 'updateStatus', 'sumTotal', 'viewTrans', 'reviewItem', 'filterDateRange','creditImportMacroAmazon','creditImportMacroSapphire','mechanicsImportMacro']
+		features = ['sumGroup', 'updateStatus', 'sumTotal', 'viewTrans', 'reviewItem', 'filterDateRange','creditImportMacroAmazon','creditImportMacroSapphire','mechanicsImportMacro','snippet']
 
 		for idx, x in enumerate(features):
 			print(f'{idx}: {x}')
@@ -1290,7 +1290,38 @@ class Nex:
 
 			# trigger import
 			self.performImport()
-		
+	
+		elif index == 9:
+			# filterDateRange
+			print('--- snippet')
+			
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
+
+			# # 9901 Sapphire
+			# # 1885,3439 Amazon
+			# # Rabo Mechanics
+			
+			# colname = 'Card'
+			# previousValue = '9901'
+			# newValue = 'Sapphire'
+
+			# # convert operations
+			# df = self.convertColumnValues(df,colname,previousValue,newValue)
+			# df = self.convertColumnValues(df,colname,'1885','Amazon')
+			# #df = self.convertColumnValues(df,colname,'3439','Amazon')
+			# df = self.convertColumnValues(df,colname,'Rabo','Mechanics')
+			# print(df.head())
+
+			# self.printFormattedTable(df,self.getTableDefaultHeaders())
+
+			# print(df.head())
+			
+			# print(filename)
+			# print(headersDf)
+
+			# # write new df to file
+			# self.writeTableDftoFile(filename,df,headersDf)
+			
 		else:
 			print("--- try again")
 
@@ -1298,7 +1329,18 @@ class Nex:
 
 	## END method ----------------------
 
+	
+	def convertColumnValues(self,df,colname,previousValue,newValue):
+		print('convertColumnValues()')
 
+		#df[colname].mask(df[colname] == previousValue ,newValue, inplace=True)
+
+		
+		df[colname] = np.where(df[colname].astype(str) == previousValue, newValue, df[colname])
+		
+		return df
+
+		## END method ----------------------
 	
 
 
