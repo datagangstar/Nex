@@ -13,6 +13,7 @@ import os
 from tabulate import tabulate # printing tables
 import numpy as np
 import ast # string arrays to array
+import yfinance as yahooFinance
 
 # https://realpython.com/documenting-python-code/#docstrings-background
 
@@ -448,7 +449,7 @@ class Nex:
 	
 	def runStocksApp(self):
 		print('\n')
-		print('deleteDataset()')
+		print('runStocksApp()')
 		print('---------')
 
 		# --- select table
@@ -471,8 +472,9 @@ class Nex:
 		headersDf = self.tableHeaderDf
 		
 		# --- build select options
+		print('---------')
 
-		features = ['snippet','viewStocks','addStock']
+		features = ['snippet','viewStocks','addStock','reportPositionValue']
 
 		for idx, x in enumerate(features):
 			print(f'{idx}: {x}')
@@ -481,7 +483,6 @@ class Nex:
 			
 		messagePrompt = f'select feature: '
 		index = int(input(messagePrompt))
-		print(f'------')
 
 		# --- filter methods
 		
@@ -489,68 +490,61 @@ class Nex:
 			print('--- snippet()')
 			print('------')
 
-			# df['date'] = pd.to_datetime(df['date'])
-			# df['consumption'] = np.where(df['consumption'].isnull(), '0', df['consumption'])
-
-			
-			# df['date'] = pd.to_datetime(df['date'])
-			# df = df.sort_values(by='date', ascending=True)
-
-			# print('------')
-
-			# headersArray = [
-			#  'date', 'excercise', 'consumption', 'fat'
-			# ]
-			# print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
-
-			# # write new df to file
-			# self.writeTableDftoFile(filename,df,headersDf)
 			
 		elif index == 1:
 			print('--- viewStocks()')
 			print('------')
 
-			#print(df.info())
-			# df['date'] = pd.to_datetime(df['date'])
-			# df = df.sort_values(by='date', ascending=True)
+			# get default table columns and print formatted table
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
 
-			print('------')
-
-			headersArray = [
-			 "symbol", "qty"
-			]
-			
-			# get table view headers
-			#headersArray = self.getTableDefaultHeaders()
-		
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
-			
 		elif index == 2:
 			print('--- addStock()')
 			print('------')
 
-			requiredColumn = 'symbol'
+			df = self.createTableRow(df,headersDf)
 
-			
-			messagePrompt = f'Name symbol: '
-			resDict = processUserInput(messagePrompt)
-			
-			if resDict['valid']:
-				value = str(resDict['value'])
-			
-			rowDict = {
-			 "ID": uuid.uuid4(),
-			 "created": date.today().strftime("%m/%d/%Y"),
-			 "modified": "",
-			 "symbol": value
-			}
-			
-			print(rowDict)
+			# --- write new df to file
+			self.writeTableDftoFile(filename,df,headersDf)
 
-			rowDf = pd.DataFrame(rowDict, index=[0])
+		elif index == 3:
+			print('--- reportPositionValue()')
+			print('------')
 
-			self.tableDf = pd.concat([df, rowDf], ignore_index=True)
-			print(self.tableDf)
+			# also look at operations like setting current price values in an operations file then viewing the app report
+			
+			# --- copy df
+			reportDf = df.copy()
+
+			# --- add column
+			
+			reportDf['price'] = pd.to_numeric(0)
+			reportDf['Mkt Value'] = pd.to_numeric(0)
+			#print(reportDf.head())
+
+			# loop rows 
+			for index, row in reportDf.iterrows():
+				#print(f'{index}: {row["symbol"]}')
+				symbolValue = row["symbol"]
+			
+				tickerObject = yahooFinance.Ticker(symbolValue)
+
+				# for key, value in tickerObject.info.items():
+				# 	print(key, ":", value)
+					
+				# display Company current price
+				dictKey = 'currentPrice'
+				price = pd.to_numeric(tickerObject.info[dictKey])
+				#print(f'{dictKey} : {price}')
+				
+				reportDf.loc[index, 'price'] = price
+				mktValue = pd.to_numeric(row["qty"]) * price
+				reportDf.loc[index, 'Mkt Value'] = mktValue
+
+			# --- print report
+			self.printFormattedTable(reportDf,['symbol','qty','price','Mkt Value'])
+
+			print(f'Total Mkt Value: {reportDf["Mkt Value"].sum()}')
 
 		else:
 			print("--- try again")
@@ -558,6 +552,72 @@ class Nex:
 	## END method ----------------------
 
 
+	
+	def createTableRow(self,df,headersDf):
+		print('createTableRow(df)')
+
+		# get editable headers
+		# loop through headers
+		# get input by header type
+		# build row dictionary
+		# concat row into df
+		# return df
+
+		# --- get editable headers
+		self.printFormattedTable(df,self.getTableDefaultHeaders())
+		
+		# --- create default row cells
+		rowDict = {
+		 "ID": uuid.uuid4(),
+		 "created": date.today().strftime("%m/%d/%Y"),
+		 "modified": ""
+		}
+		
+		for index, row in headersDf.iterrows():
+			#print(f'{index}: {row["editable"]}')
+
+			columnName = row["name"]
+			
+			if row["editable"]:
+				#print('get input')
+				messagePrompt = f'Select "{row["name"]}":'
+
+				inputValue = ''
+
+				if row["dtype"] == 'str':
+					#print('get str')
+					
+					inputValue = input(messagePrompt)
+					print(f'------')
+					
+				elif row["dtype"] == 'int64':
+					#print('get int')
+					
+					inputValue = int(input(messagePrompt))
+					print(f'------')
+					
+				elif row["dtype"] == 'float64':
+					#print('get float')
+					
+					inputValue = pd.to_numeric(input(messagePrompt))
+					print(f'------')
+					
+				else:
+					print('unknown type')
+
+				rowDict[columnName] = inputValue
+
+		print(rowDict)
+		
+		rowDf = pd.DataFrame(rowDict, index=[0])
+		df = pd.concat([df, rowDf], ignore_index=True)
+		
+		# --- print df by defaults
+		self.printFormattedTable(df,self.getTableDefaultHeaders())
+		
+		return df
+
+	## END method ----------------------
 	
 
 	
@@ -583,7 +643,7 @@ class Nex:
 		headersDf = self.tableHeaderDf
 		
 
-		features = ['snippet','getTotal']
+		features = ['snippet','getTotal','addDonation']
 
 		for idx, x in enumerate(features):
 			print(f'{idx}: {x}')
@@ -633,6 +693,14 @@ class Nex:
 		
 			# print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 			
+		elif index == 2:
+			print('--- addDonation()')
+			print('------')
+
+			df = self.createTableRow(df,headersDf)
+
+			# --- write new df to file
+			self.writeTableDftoFile(filename,df,headersDf)
 
 		else:
 			print("--- try again")
@@ -755,6 +823,7 @@ class Nex:
 			headersArray = [
 			 "date", "excercise", "consumption", "fat"
 			]
+			
 			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 			
 			# select index
@@ -977,7 +1046,7 @@ class Nex:
 
 			
 
-			
+			# filter out 
 			#df = df[df['Reviewed'] == True]
 			#df['Reviewed']
 			#df = df[df['Reviewed'] == True]
@@ -1000,6 +1069,7 @@ class Nex:
 			groupDf = df.groupby('Card')['Amount'].sum()
 			print(groupDf)
 
+		
 		elif index == 3:
 			print('--- viewTrans')
 			#print(f'--- {feature[index]}')
