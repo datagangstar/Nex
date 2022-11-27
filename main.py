@@ -490,7 +490,11 @@ class Nex:
 			print('--- snippet()')
 			print('------')
 
-			
+			with open('script.txt') as f:
+				#[print(line) for line in f.readlines()]
+				for line in f:
+					eval(line.strip())
+
 		elif index == 1:
 			print('--- viewStocks()')
 			print('------')
@@ -516,41 +520,43 @@ class Nex:
 			# --- copy df
 			reportDf = df.copy()
 
-			# --- add column
-			
+			# --- add report columns
 			reportDf['price'] = pd.to_numeric(0)
 			reportDf['Mkt Value'] = pd.to_numeric(0)
 			#print(reportDf.head())
 
-			# loop rows 
-			for index, row in reportDf.iterrows():
-				#print(f'{index}: {row["symbol"]}')
-				symbolValue = row["symbol"]
+			# get price from yahoo
+			reportDf['price'] = reportDf.apply(self.getPricebySymbol, axis=1)
+
+			# calculate market value
+			reportDf['Mkt Value'] = np.multiply(pd.to_numeric(reportDf["qty"]), reportDf['price'])
 			
-				tickerObject = yahooFinance.Ticker(symbolValue)
-
-				# for key, value in tickerObject.info.items():
-				# 	print(key, ":", value)
-					
-				# display Company current price
-				dictKey = 'currentPrice'
-				price = pd.to_numeric(tickerObject.info[dictKey])
-				#print(f'{dictKey} : {price}')
-				
-				reportDf.loc[index, 'price'] = price
-				mktValue = pd.to_numeric(row["qty"]) * price
-				reportDf.loc[index, 'Mkt Value'] = mktValue
-
-			# --- print report
+			# -- print report
 			self.printFormattedTable(reportDf,['symbol','qty','price','Mkt Value'])
 
-			print(f'Total Mkt Value: {reportDf["Mkt Value"].sum()}')
+			# -- calculate metric
+			positionTotalValue = reportDf["Mkt Value"].sum()
+			print(f'Total Mkt Value: {positionTotalValue}')
 
 		else:
 			print("--- try again")
 
 	## END method ----------------------
 
+	
+	def getPricebySymbol(self,row):
+		#print(f'{row.name}: {row["symbol"]}')
+
+		column = 'symbol'
+		tickerObject = yahooFinance.Ticker(row[column])
+			
+		# display Company current price
+		dictKey = 'currentPrice'
+		price = pd.to_numeric(tickerObject.info[dictKey])
+
+		return price
+		
+	## END method ----------------------
 
 	
 	def createTableRow(self,df,headersDf):
