@@ -25,7 +25,7 @@ class Nex:
 
 		# load datasets data & meta
 		self.datasetsDf = pd.DataFrame(self.readDataToDf('datasets.xlsx'))
-		self.headersDf = pd.DataFrame(self.readHeadersToDf('datasets.xlsx'))
+		#self.headersDf = pd.DataFrame(self.readHeadersToDf('datasets.xlsx'))
 		#self.printDatasets()
 
 		self.selectedDatasetIndex = ''
@@ -51,10 +51,13 @@ class Nex:
 			'runStocksApp',
 			'runDonationApp',
 			'runBodyFatApp',
-			'runTransactionsApplication'
+			'runTransactionsApplication',
+			'runContactsApp',
+			'runObjectsApp'
 		])
 
 		self.tableMethods = pd.Series([
+			'printHeaders',
 		 	'printTable',
 			'addTableColumn',
 			#'renameColumn',
@@ -184,8 +187,6 @@ class Nex:
 		# datasets schema
 		print(self.datasetsDf.info())
 
-		# head table
-		print(self.headersDf)
 		
 		# show table
 		headersArray = [
@@ -196,6 +197,9 @@ class Nex:
 
 		self.printFormattedTable(self.datasetsDf,headersArray)
 
+		# head table
+		#print(self.headersDf)
+		
 		## END method ----------------------
 
 	
@@ -240,22 +244,22 @@ class Nex:
 		headersArray = self.getTableDefaultHeaders()
 		
 		# viewHeaders = self.datasetsDf.loc[indexSelection, 'default_table']
-		# print(viewHeaders)
+		print(headersArray)
 		# a_list = ast.literal_eval(viewHeaders)
 		#viewheadersArr = viewHeaders[1:-1].split(',')
 
-		self.printFormattedTable(self.tableDf,headersArray)
+		self.printFormattedTable(self.tableDf,self.getTableDefaultHeaders())
 		
-			
 		## END method ----------------------
 
 		
 	def getTableDefaultHeaders(self):
-
-		viewHeaders = self.datasetsDf.loc[self.selectedDatasetIndex, 'default_table']
-		viewHeadersArray = ast.literal_eval(viewHeaders)
-
-		return viewHeadersArray
+		headerArray = []
+		for index, row in self.tableHeaderDf.iterrows():
+			if row["default_view"]:
+				headerArray.append(row["name"])
+		
+		return headerArray
 		
 		## END method ----------------------
 		
@@ -333,9 +337,9 @@ class Nex:
 			# build dataset table
 			# headDict = pd.Series(['ID','created','modified','name'])
 			dataDf = pd.DataFrame({
-			 'ID': pd.Series(dtype='int'),
-			 'created': pd.Series(dtype='str'),
-			 'modified': pd.Series(dtype='str')
+			 'ID': pd.Series(dtype='object'),
+			 'created': pd.Series(dtype='datetime64[ns]'),
+			 'modified': pd.Series(dtype='datetime64[ns]')
 			})
 
 			# get new df headers
@@ -347,27 +351,26 @@ class Nex:
 			 'name': pd.Series(dtype='str'),
 			 'dtype': pd.Series(dtype='str'),
 			 'alias': pd.Series(dtype='str'),
-			 'editable': pd.Series(dtype='str')
+			 'editable': pd.Series(dtype='str'),
+			 'required': pd.Series(dtype='str'),
+			 'default_view': pd.Series(dtype='str')
 			})
 
 			# set header edit column
 			for idx, x in enumerate(headers):
 
 				if x == 'ID':
-					dtypeValue = 'int'
+					dtypeValue = 'object'
 				else:
-					dtypeValue = 'str'
-
-				if x == 'name':
-					editableValue = 'True'
-				else:
-					editableValue = 'False'
+					dtypeValue = 'datetime64'
 
 				headerRowDict = {
-				 "name": x,
-				 "dtype": dtypeValue,
-				 "alias": x,
-				 "editable": editableValue
+				 'name': x,
+				 'dtype': dtypeValue,
+				 'alias': x,
+				 'editable': 'False',
+				 'required': 'False',
+				 'default_view': 'False'
 				}
 
 				#headersDf = pd.concat([headersDf, headerRowDict], ignore_index=True)
@@ -381,11 +384,50 @@ class Nex:
 		# --- update datasets
 			
 			# update datesets file
-			with pd.ExcelWriter(f'datasets.xlsx') as writer:
-				self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
-				self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
+			self.writeDatasetsDftoFile()
 
 		## END method ----------------------
+
+	def writeDatasetsDftoFile(self):
+		print('\n')
+		print('writeDatasetsDftoFile()')
+		print('---------')
+
+		options = {}
+		options['strings_to_formulas'] = False
+		options['strings_to_urls'] = False
+
+		engine_kwargs = {'options': options}
+		# writer = pd.ExcelWriter(
+		# 	os.path.join(DATA_DIR, 'Data.xlsx'),
+		# 	engine='xlsxwriter',
+		# 	options=options)
+		
+		# manual_labelling_data.to_excel(writer, 'Sheet_A', index=False)
+		# writer.save()
+		
+		# update datesets file
+
+		
+		#self.datasetsDf['source'] = self.datasetsDf['source'].astype(str)
+		self.datasetsDf.drop('source', axis=1, inplace=True)
+			
+
+		
+		with pd.ExcelWriter('datasets.xlsx') as writer:
+			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
+			#self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
+
+		# with pd.ExcelWriter('datasets.xlsx',
+  #                       engine='xlsxwriter',
+  #                       engine_kwargs={'options': {'strings_to_formulas': False,
+		# 										   'strings_to_urls': False}}
+		# 				   ) as writer:
+		# 	self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
+		# 	self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
+
+
+	## END method ----------------------
 
 	
 	def renameDataset(self):
@@ -444,7 +486,216 @@ class Nex:
 
 	## END method ----------------------
 
+	def loadTableToDf(self,tableName):
+	
+		# build filename
+		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
+		self.selectedDatasetIndex = index[0]
 
+		filename = self.datasetsDf.loc[index[0], 'source']
+		location = f'datasets/{filename}'
+		print(location)
+		
+		# read to dataframe using helper functions
+		self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		#df = self.tableDf
+
+		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		#headersDf = self.tableHeaderDf
+
+		return self.tableDf,self.tableHeaderDf
+		
+	## END method ----------------------
+
+	def runObjectsApp(self):
+		print('\n')
+		print('runObjectsApp()')
+		print('---------')
+
+		# --- select table
+		tableName = 'objects'
+		df,headersDf = self.loadTableToDf(tableName)
+		
+		# --- build select options
+		print('---------')
+
+		index = self.promptAppFeatures([
+			'snippet',
+			'viewObjects',
+			'addObject'
+		])
+
+		# --- filter methods
+		
+		if index == 0:
+			print('--- snippet()')
+			print('------')
+			
+		elif index == 1:
+			print('--- viewObjects()')
+			print('------')
+
+			# get default table columns and print formatted table
+			self.printFormattedTable(df,[
+				# 'Contact ID',
+				'First Name',
+				# 'Last Name',
+				# 'Display Name',
+				# 'Nickname',
+				'E-mail Address',
+				# 'Home Phone',
+				'Mobile Phone',
+				'Business Phone'
+			])
+
+			print(df.info())
+
+		elif index == 2:
+			print('--- addObject()')
+			print('------')
+
+			# --- create row from default field input
+			df = self.createTableRow(df,headersDf)
+
+			# --- write new df to file
+			self.writeTableDftoFile(filename,df,headersDf)
+			
+		else:
+			print("--- try again")
+
+	## END method ----------------------
+
+
+	def promptAppFeatures(self,features):
+	
+		for idx, x in enumerate(features):
+			print(f'{idx}: {x}')
+
+		messagePrompt = f'select feature: '
+		return int(input(messagePrompt))
+		
+	## END method ----------------------
+
+		
+	def runContactsApp(self):
+		print('\n')
+		print('runContactsApp()')
+		print('---------')
+
+		# --- select table
+		tableName = 'contacts'
+		df,headersDf = self.loadTableToDf('contacts')
+		
+		# --- build select options
+		print('---------')
+
+		features = [
+			'snippet',
+			'importContacts',
+			'viewContacts',
+			'transformContacts'
+		]
+
+		for idx, x in enumerate(features):
+			print(f'{idx}: {x}')
+
+		# --- select options
+			
+		messagePrompt = f'select feature: '
+		index = int(input(messagePrompt))
+
+		# --- filter methods
+		
+		if index == 0:
+			print('--- snippet()')
+			print('------')
+
+
+		elif index == 1:
+			print('--- importContacts()')
+			print('------')
+
+			location = f'imports/contacts.xlsx'
+			print(f'location: {location}')
+			
+			df = pd.DataFrame(pd.read_excel(location, sheet_name='contacts'))
+	
+			# add reviewed with default false
+			print('add')
+			df['Imported'] = date.today().strftime("%m/%d/%Y")
+	
+			print(df)
+			print(df.info())
+	
+			self.importDf = df
+
+			# trigger import
+			self.performImport()
+			
+		elif index == 2:
+			print('--- viewContacts()')
+			print('------')
+
+			# get default table columns and print formatted table
+			self.printFormattedTable(df,[
+				# 'Contact ID',
+				'First Name',
+				# 'Last Name',
+				# 'Display Name',
+				# 'Nickname',
+				'E-mail Address',
+				# 'Home Phone',
+				'Mobile Phone',
+				'Business Phone'
+			])
+
+			print(df.info())
+	
+
+		elif index == 3:
+			print('--- transformContacts()')
+			print('------')
+
+			print('drop')
+
+			df.drop('Contact ID', axis=1, inplace=True)
+			
+			df.drop('E-mail 2 Address', axis=1, inplace=True)
+			df.drop('E-mail 3 Address', axis=1, inplace=True)
+			df.drop('Home Fax', axis=1, inplace=True)
+			df.drop('Business Fax', axis=1, inplace=True)
+			df.drop('Pager', axis=1, inplace=True)
+			df.drop('Home Address 2', axis=1, inplace=True)
+			
+			df.drop('Business Address', axis=1, inplace=True)
+			df.drop('Business Address 2', axis=1, inplace=True)
+			df.drop('Business City', axis=1, inplace=True)
+			df.drop('Business Postal Code', axis=1, inplace=True)
+			df.drop('Business State', axis=1, inplace=True)
+			df.drop('Business Country', axis=1, inplace=True)
+			df.drop('Country Code', axis=1, inplace=True)
+			
+			df.drop('Job Title', axis=1, inplace=True)
+			df.drop('Department', axis=1, inplace=True)
+			
+			df.drop('Anniversary', axis=1, inplace=True)
+			df.drop('Gender', axis=1, inplace=True)
+			df.drop('Web Page', axis=1, inplace=True)
+			df.drop('Web Page 2', axis=1, inplace=True)
+			
+			print('rename')
+			df.rename(columns={'Home Street': 'Street'}, inplace=True)
+			df.rename(columns={'Home City': 'City'}, inplace=True)
+			df.rename(columns={'Home State': 'State'}, inplace=True)
+			df.rename(columns={'Home Postal Code': 'Postal Code'}, inplace=True)
+			df.rename(columns={'Home Country': 'Country'}, inplace=True)
+			
+			print(df.info())
+			
+		else:
+			print("--- try again")
+
+	## END method ----------------------
 
 	
 	def runStocksApp(self):
@@ -454,22 +705,26 @@ class Nex:
 
 		# --- select table
 
-		# build filename
-		index = self.datasetsDf[self.datasetsDf['name'] == 'stocks'].index
-		self.selectedDatasetIndex = index[0]
+		# # build filename
+		# index = self.datasetsDf[self.datasetsDf['name'] == 'stocks'].index
+		# self.selectedDatasetIndex = index[0]
 
-		filename = self.datasetsDf.loc[index[0], 'source']
-		print(filename)
+		# filename = self.datasetsDf.loc[index[0], 'source']
+		# print(filename)
 		
-		location = f'datasets/{filename}'
-		print(location)
+		# location = f'datasets/{filename}'
+		# print(location)
 		
-		# read to dataframe using helper functions
-		self.tableDf = pd.DataFrame(self.readDataToDf(location))
-		df = self.tableDf
+		# # read to dataframe using helper functions
+		# self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		# df = self.tableDf
 
-		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
-		headersDf = self.tableHeaderDf
+		# self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		# headersDf = self.tableHeaderDf
+
+		
+		# --- select table
+		df,headersDf = self.loadTableToDf('stocks')
 		
 		# --- build select options
 		print('---------')
@@ -570,7 +825,7 @@ class Nex:
 		# return df
 
 		# --- get editable headers
-		self.printFormattedTable(df,self.getTableDefaultHeaders())
+		#self.printFormattedTable(df,self.getTableDefaultHeaders())
 		
 		# --- create default row cells
 		rowDict = {
@@ -584,30 +839,22 @@ class Nex:
 
 			columnName = row["name"]
 			
-			if row["editable"]:
+			if row["required"]:
 				#print('get input')
 				messagePrompt = f'Select "{row["name"]}":'
-
 				inputValue = ''
-
 				if row["dtype"] == 'str':
 					#print('get str')
-					
 					inputValue = input(messagePrompt)
 					print(f'------')
-					
 				elif row["dtype"] == 'int64':
 					#print('get int')
-					
 					inputValue = int(input(messagePrompt))
 					print(f'------')
-					
 				elif row["dtype"] == 'float64':
 					#print('get float')
-					
 					inputValue = pd.to_numeric(input(messagePrompt))
 					print(f'------')
-					
 				else:
 					print('unknown type')
 
@@ -767,8 +1014,10 @@ class Nex:
 			headersArray = [
 			 'date', 'excercise', 'consumption', 'fat'
 			]
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
+		
 			# write new df to file
 			self.writeTableDftoFile(filename,df,headersDf)
 			
@@ -792,8 +1041,9 @@ class Nex:
 			# get table view headers
 			headersArray = self.getTableDefaultHeaders()
 		
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 			
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
 
 		elif index == 2:
 			print('--- reportProgress()')
@@ -818,8 +1068,10 @@ class Nex:
 			headersArray = [
 			 "date", "excercise", "consumption", "fat", "actual"
 			]
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
+			
 		elif index == 3:
 			print('--- updateDay()')
 
@@ -830,8 +1082,10 @@ class Nex:
 			 "date", "excercise", "consumption", "fat"
 			]
 			
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
 			
+			self.printFormattedTable(df,headersArray)
+		
 			# select index
 			messagePrompt = f'select record: '
 			recordIndex = int(input(messagePrompt))
@@ -1104,7 +1358,9 @@ class Nex:
 			# ]
 			headersArray = self.getTableDefaultHeaders()
 			
-			print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+			
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
 			#print(df.info())
 
 		elif index == 4:
@@ -1137,7 +1393,9 @@ class Nex:
 			 "Amount", "Description", "Expense", "Transaction Date",
 			 "Reviewed"
 			]
-			print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
+			#print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
+			
+			self.printFormattedTable(df,headersArray)
 			#print(df.info())
 
 			# select index
@@ -1258,7 +1516,7 @@ class Nex:
 			# add reviewed with default false
 			print('add')
 			df['Imported'] = date.today().strftime("%m/%d/%Y")
-			df['Card'] = "1885"
+			df['Account'] = "Amazon"
 			df['Reviewed'] = "0"
 			df['Expense'] = ""
 	
@@ -1297,7 +1555,7 @@ class Nex:
 			# add reviewed with default false
 			print('add')
 			df['Imported'] = date.today().strftime("%m/%d/%Y")
-			df['Card'] = "Sapphire"
+			df['Account'] = "Sapphire"
 			df['Reviewed'] = "0"
 			df['Expense'] = ""
 	
@@ -1426,12 +1684,21 @@ class Nex:
 	# table CRUD
 	# -------------
 
+	def printHeaders(self):
+		print('\n|\n|\n|')
+		print('printHeaders()')
+		
+		print(self.tableHeaderDf)
+
+		# todo - check dataset exists, get total & report
+
+		## END method ----------------------
+
 	def printTable(self):
 		print('\n|\n|\n|')
 		print('printTable()')
 		
 		print(self.tableDf)
-		print(self.tableDf.info())
 
 		# todo - check dataset exists, get total & report
 
@@ -1469,34 +1736,36 @@ class Nex:
 		self.tableDf = df
 		headers = self.tableDf.columns
 
-		# todo - turn into func and prevent ID, created, modified from being edited
-		tempTableHeaderDf = pd.DataFrame()
-		for idx, x in enumerate(headers):
-			print(f'{idx}: {x}')
-
-			editable = ""
-			if x == 'ID':
-				editable = "FALSE"
-			elif x == 'created':
-				editable = "FALSE"
-			elif x == 'modified':
-				editable = "FALSE"
-			else:
-				editable = "TRUE"
-
-			headerRowDict = {
-			 "name": x,
+		headerRowDict = {
+			 "name": newColumn,
 			 "dtype": 'str',
-			 "alias": x,
-			 "editable": editable
+			 "alias": newColumn,
+			 "editable": "TRUE"
 			}
 
-			tempTableHeaderDf = pd.concat(
-			 [tempTableHeaderDf,
+		self.tableHeaderDf = pd.concat(
+			 [self.tableHeaderDf,
 			  pd.DataFrame(headerRowDict, index=[0])],
 			 ignore_index=True)
 
-		self.tableHeaderDf = tempTableHeaderDf
+		# # todo - turn into func and prevent ID, created, modified from being edited
+		# tempTableHeaderDf = pd.DataFrame()
+		# for idx, x in enumerate(headers):
+		# 	print(f'{idx}: {x}')
+
+		# 	headerRowDict = {
+		# 	 "name": x,
+		# 	 "dtype": 'str',
+		# 	 "alias": x,
+		# 	 "editable": "TRUE"
+		# 	}
+
+		# 	tempTableHeaderDf = pd.concat(
+		# 	 [tempTableHeaderDf,
+		# 	  pd.DataFrame(headerRowDict, index=[0])],
+		# 	 ignore_index=True)
+
+		# self.tableHeaderDf = tempTableHeaderDf
 		print(self.tableHeaderDf)
 
 		# --- update table
