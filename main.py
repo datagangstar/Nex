@@ -332,7 +332,7 @@ class Nex:
 
 			# add row to datasets
 			self.datasetsDf = self.datasetsDf.append(rowDict, ignore_index=True)
-
+			print(self.datasetsDf)
 
 			# build dataset table
 			# headDict = pd.Series(['ID','created','modified','name'])
@@ -344,6 +344,7 @@ class Nex:
 
 			# get new df headers
 			headers = dataDf.columns
+			print(headers)
 
 			# set dtype of each header
 			# todo - set dtype based on assignment
@@ -377,6 +378,7 @@ class Nex:
 				headersDf = headersDf.append(headerRowDict, ignore_index=True)
 
 		# --- write table
+			print(headersDf)
 
 			# write new df to file
 			self.writeTableDftoFile(filename,dataDf,headersDf)
@@ -393,39 +395,10 @@ class Nex:
 		print('writeDatasetsDftoFile()')
 		print('---------')
 
-		options = {}
-		options['strings_to_formulas'] = False
-		options['strings_to_urls'] = False
-
-		engine_kwargs = {'options': options}
-		# writer = pd.ExcelWriter(
-		# 	os.path.join(DATA_DIR, 'Data.xlsx'),
-		# 	engine='xlsxwriter',
-		# 	options=options)
-		
-		# manual_labelling_data.to_excel(writer, 'Sheet_A', index=False)
-		# writer.save()
-		
 		# update datesets file
-
-		
-		#self.datasetsDf['source'] = self.datasetsDf['source'].astype(str)
-		self.datasetsDf.drop('source', axis=1, inplace=True)
-			
-
-		
 		with pd.ExcelWriter('datasets.xlsx') as writer:
 			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
 			#self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
-
-		# with pd.ExcelWriter('datasets.xlsx',
-  #                       engine='xlsxwriter',
-  #                       engine_kwargs={'options': {'strings_to_formulas': False,
-		# 										   'strings_to_urls': False}}
-		# 				   ) as writer:
-		# 	self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
-		# 	self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
-
 
 	## END method ----------------------
 
@@ -503,7 +476,7 @@ class Nex:
 		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
 		#headersDf = self.tableHeaderDf
 
-		return self.tableDf,self.tableHeaderDf
+		return filename,self.tableDf,self.tableHeaderDf
 		
 	## END method ----------------------
 
@@ -514,7 +487,7 @@ class Nex:
 
 		# --- select table
 		tableName = 'objects'
-		df,headersDf = self.loadTableToDf(tableName)
+		filename,df,headersDf = self.loadTableToDf(tableName)
 		
 		# --- build select options
 		print('---------')
@@ -522,7 +495,8 @@ class Nex:
 		index = self.promptAppFeatures([
 			'snippet',
 			'viewObjects',
-			'addObject'
+			'addObject',
+			'deleteObject'
 		])
 
 		# --- filter methods
@@ -536,17 +510,7 @@ class Nex:
 			print('------')
 
 			# get default table columns and print formatted table
-			self.printFormattedTable(df,[
-				# 'Contact ID',
-				'First Name',
-				# 'Last Name',
-				# 'Display Name',
-				# 'Nickname',
-				'E-mail Address',
-				# 'Home Phone',
-				'Mobile Phone',
-				'Business Phone'
-			])
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
 
 			print(df.info())
 
@@ -559,6 +523,21 @@ class Nex:
 
 			# --- write new df to file
 			self.writeTableDftoFile(filename,df,headersDf)
+
+			# -- build dictionary
+			#objectDict = Dict
+
+			# --- create object file with 
+			
+		elif index == 3:
+			print('--- deleteObject()')
+			print('------')
+
+			# -- drop object
+
+			# -- update table
+
+			# -- delete file
 			
 		else:
 			print("--- try again")
@@ -1326,7 +1305,7 @@ class Nex:
 			print('------')
 			
 			
-			groupDf = df.groupby('Card')['Amount'].sum()
+			groupDf = df.groupby('Account')['Amount'].sum()
 			print(groupDf)
 
 		
@@ -1390,8 +1369,12 @@ class Nex:
 			
 
 			headersArray = [
-			 "Amount", "Description", "Expense", "Transaction Date",
-			 "Reviewed"
+				"Description", 
+				"Account", 
+				"Expense", 
+				"Transaction Date",
+			 	"Amount", 
+			 	"Reviewed"
 			]
 			#print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
 			
@@ -1607,7 +1590,7 @@ class Nex:
 			# add reviewed with default false
 			print('add')
 			df['Imported'] = date.today().strftime("%m/%d/%Y")
-			df['Card'] = "Rabo"
+			df['Account'] = "Mechanics"
 			df['Reviewed'] = "0"
 			df['Expense'] = ""
 
@@ -1615,7 +1598,7 @@ class Nex:
 
 			# drop memo
 			print('drop')
-			df.drop(['Transaction Number', 'Memo', 'Balance', 'Check Number', 'Amount Debit', 'Amount Credit'], axis=1, inplace=True)
+			df.drop(['Transaction Number', 'Memo', 'Balance', 'Check Number', 'Amount Debit', 'Amount Credit', 'Fees  '], axis=1, inplace=True)
 	
 			print(df)
 			print(df.info())
@@ -1624,6 +1607,7 @@ class Nex:
 
 			# trigger import
 			self.performImport()
+			
 	
 		elif index == 9:
 			# filterDateRange
@@ -1740,7 +1724,9 @@ class Nex:
 			 "name": newColumn,
 			 "dtype": 'str',
 			 "alias": newColumn,
-			 "editable": "TRUE"
+			 "editable": "TRUE",
+			 "required": "TRUE",
+			 "default_view": "TRUE"
 			}
 
 		self.tableHeaderDf = pd.concat(
@@ -1853,9 +1839,11 @@ class Nex:
 		dataDf = self.tableDf.set_index('ID')
 		headersDf = self.tableHeaderDf.set_index('name')
 
-		with pd.ExcelWriter(f'datasets/{source}') as writer:
-			dataDf.to_excel(writer, sheet_name='data')
-			headersDf.to_excel(writer, sheet_name='headers')
+		# --- update datasets
+		self.writeDatasetsDftoFile()
+		# with pd.ExcelWriter(f'datasets/{source}') as writer:
+		# 	dataDf.to_excel(writer, sheet_name='data')
+		# 	headersDf.to_excel(writer, sheet_name='headers')
 
 		# todo - create new file, archive old one in folder by table name; do same for imports
 
@@ -2103,7 +2091,13 @@ class Nex:
 		for idx, x in enumerate(headers):
 			print(f'{idx}: {x}')
 
-			headerRowDict = {"name": x, "dtype": 'str', "alias": x, "editable": 'True'}
+			headerRowDict = {
+				"name": x, 
+				"dtype": 'str', 
+				"alias": x, 
+				"editable": 'TRUE', 
+				"required": 'TRUE', 
+				"default_view": 'TRUE'}
 
 			tempTableHeaderDf = tempTableHeaderDf.append(headerRowDict,
 			                                             ignore_index=True)
@@ -2134,10 +2128,11 @@ class Nex:
 		#print(self.datasetsDf.loc[self.selectedDatasetIndex,:])
 
 		# --- update datasets
+		self.writeDatasetsDftoFile()
 		
-		with pd.ExcelWriter(f'datasets.xlsx') as writer:
-			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
-			self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
+		# with pd.ExcelWriter(f'datasets.xlsx') as writer:
+		# 	self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
+		# 	self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
 
 		# return to main menu
 		self.promptOptions = self.datasetsMethods
