@@ -14,6 +14,7 @@ from tabulate import tabulate # printing tables
 import numpy as np
 import ast # string arrays to array
 import yfinance as yahooFinance
+import json
 
 # https://realpython.com/documenting-python-code/#docstrings-background
 
@@ -30,6 +31,7 @@ class Nex:
 
 		self.selectedDatasetIndex = ''
 		self.selectedRecordIndex = ''
+		self.selectedObject = {}
 
 		self.tableDf = pd.DataFrame()
 		self.tableHeaderDf = pd.DataFrame()
@@ -430,14 +432,11 @@ class Nex:
 
 		# remove file if exists
 		source = self.datasetsDf.loc[indexSelection, 'source']
-		filename = f'datasets/{source}'
+		path = f'datasets/{source}'
 		#print(filename)
 
 		# check exists and remove files
-		if os.path.exists(filename):
-			os.remove(filename)
-		else:
-			print("The file does not exist")
+		self.deleteFile(path)
 
 		# remove from dataset
 		self.datasetsDf = self.datasetsDf.drop(indexSelection)
@@ -459,6 +458,10 @@ class Nex:
 
 	## END method ----------------------
 
+
+
+
+	
 	def loadTableToDf(self,tableName):
 	
 		# build filename
@@ -480,6 +483,10 @@ class Nex:
 		
 	## END method ----------------------
 
+
+
+
+	
 	def runObjectsApp(self):
 		print('\n')
 		print('runObjectsApp()')
@@ -496,7 +503,8 @@ class Nex:
 			'snippet',
 			'viewObjects',
 			'addObject',
-			'deleteObject'
+			'deleteObject',
+			'selectObj'
 		])
 
 		# --- filter methods
@@ -521,30 +529,127 @@ class Nex:
 			# --- create row from default field input
 			df = self.createTableRow(df,headersDf)
 
+
 			# --- write new df to file
 			self.writeTableDftoFile(filename,df,headersDf)
 
 			# -- build dictionary
-			#objectDict = Dict
-
+			
+			obj = {
+				"ID": str(df['ID'].iloc[-1]),
+				"name": df['name'].iloc[-1]
+			}
+			print('obj')
+			print(obj)
+			
 			# --- create object file with 
+			ID = df['ID'].iloc[-1]
+
+			self.writeObjectToFile(ID,obj)
 			
 		elif index == 3:
 			print('--- deleteObject()')
 			print('------')
 
-			# -- drop object
+			# -- sele object
+			recordIndex = self.promptRowSelection(df)
 
+			ID = str(df['ID'].iloc[recordIndex])
+			
 			# -- update table
+			df = df.drop(recordIndex)
+			df = df.reset_index(drop=True)
 
+			# -- show changes
+			self.printFormattedTable(df,self.getTableDefaultHeaders())
+
+			# --- write new df to file
+			self.writeTableDftoFile(filename,df,headersDf)
+			
 			# -- delete file
+			path = f'objects/{ID}.json'
+			print(path)
+		
+			# check exists and remove files
+			self.deleteFile(path)
+
+			
+		elif index == 4:
+			print('--- selectObj()')
+			print('------')
+
+			# -- select object
+			recordIndex = self.promptRowSelection(df)
+
+			ID = str(df['ID'].iloc[recordIndex])
+
+			# -- load object file
+			obj = self.readObjectFromFile(ID)
+			#print(obj)
+			
+			print(json.dumps(obj, indent=4))
+
+			# -- set object variable
+			self.selectedObject = obj
 			
 		else:
 			print("--- try again")
 
 	## END method ----------------------
 
+	
+	def deleteFile(self,path):
+	
+		if os.path.exists(path):
+			os.remove(path)
+			print("The file was removed")
+		else:
+			print("The file does not exist")
 
+	## END method ----------------------
+
+	
+	def promptRowSelection(self,df):
+	
+		# -- print object list
+		self.printFormattedTable(df,self.getTableDefaultHeaders())
+
+		# -- select obj list
+		messagePrompt = f'select record: '
+		return int(input(messagePrompt))
+
+	## END method ----------------------
+
+	
+	def writeObjectToFile(self,ID,data):
+	
+		path = f'objects/{ID}.json'
+	
+		# Serialize data into file:
+		json.dump( data, open( path, 'w' ) )
+		
+		# Read data from file:
+		#data = json.load( open( "file_name.json" ) )
+
+	## END method ----------------------
+		
+	
+	def readObjectFromFile(self,ID):
+	
+		path = f'objects/{ID}.json'
+		
+		# Read data from file:
+		try: 
+			with open( path ) as file:
+				data = json.load(file)
+			return data
+				
+		except FileNotFoundError:
+			print('FileNotFoundError')
+		
+	## END method ----------------------
+
+		
 	def promptAppFeatures(self,features):
 	
 		for idx, x in enumerate(features):
@@ -555,6 +660,10 @@ class Nex:
 		
 	## END method ----------------------
 
+
+
+
+	
 		
 	def runContactsApp(self):
 		print('\n')
@@ -563,7 +672,7 @@ class Nex:
 
 		# --- select table
 		tableName = 'contacts'
-		df,headersDf = self.loadTableToDf('contacts')
+		filename,df,headersDf = self.loadTableToDf('contacts')
 		
 		# --- build select options
 		print('---------')
@@ -703,7 +812,7 @@ class Nex:
 
 		
 		# --- select table
-		df,headersDf = self.loadTableToDf('stocks')
+		filename,df,headersDf = self.loadTableToDf('stocks')
 		
 		# --- build select options
 		print('---------')
