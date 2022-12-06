@@ -1,5 +1,7 @@
 Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+12/04/2022,12/04/2022,Microsoft*Subscription,Shopping,Sale,-1.99,
+12/03/2022,12/04/2022,1PASSWORD,Shopping,Sale,-3.99,
+12/01/2022,12/02/2022,Steam Purchase,Entertainment,Sale,-20.99,
 11/28/2022,11/28/2022,AUTOMATIC PAYMENT - THANK,,Payment,691.49,
 11/27/2022,11/28/2022,76 - DIVISION STREET F,Gas,Sale,-62.95,
 11/26/2022,11/28/2022,BUDD + FINN,Home,Sale,-20.00,
-11/22/2022,11/23/2022,FARMERS INS BILLING,Bills & Utilities,Return,293.11,

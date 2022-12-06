@@ -103,6 +103,8 @@ class Nex:
 	def readDataToDf(self, file):
 		try:
 			data = pd.read_excel(file, sheet_name='data')
+			#headers = pd.read_excel(file, sheet_name='headers')
+			#print(headers.head())
 			# headers = pd.DataFrame(pd.read_excel(file, sheet_name='headers'))
 			return data
 			# return {'data':data,'headers':headers}
@@ -499,12 +501,19 @@ class Nex:
 		# --- build select options
 		print('---------')
 
+		selectedMethod = 'selectObj'
+		
+		# -- select object
+		if bool(self.selectedObject):
+			selectedMethod = 'clearObj'
+
 		index = self.promptAppFeatures([
 			'snippet',
 			'viewObjects',
 			'addObject',
 			'deleteObject',
-			'selectObj'
+			selectedMethod,
+			'addObjectItem'
 		])
 
 		# --- filter methods
@@ -575,28 +584,73 @@ class Nex:
 
 			
 		elif index == 4:
-			print('--- selectObj()')
+			print(f'--- {selectedMethod}()')
 			print('------')
 
-			# -- select object
-			recordIndex = self.promptRowSelection(df)
-
-			ID = str(df['ID'].iloc[recordIndex])
-
-			# -- load object file
-			obj = self.readObjectFromFile(ID)
-			#print(obj)
+			if selectedMethod == 'selectObj':
+				# -- select object
+				recordIndex = self.promptRowSelection(df)
+	
+				ID = str(df['ID'].iloc[recordIndex])
+	
+				# -- load object file
+				obj = self.readObjectFromFile(ID)
+				#print(obj)
+				
+				print(json.dumps(obj, indent=4))
+	
+				# -- set object variable
+				self.selectedObject = obj
+			else: 
+				self.selectedObject = {}
 			
+			
+		elif index == 5:
+			print('--- addObjectItem()')
+			print('------')
+			
+			ID = ''
+			obj = self.selectedObject
+
+			# -- select object
+			if not bool(obj):
+				# -- 
+				print('is empty')
+				recordIndex = self.promptRowSelection(df)
+				ID = str(df['ID'].iloc[recordIndex])
+	
+				# -- load object file
+				obj = self.readObjectFromFile(ID)
+			else: 
+				ID = obj['ID']
+
+			print(f'ID: {ID}')
+			print(json.dumps(obj, indent=4))
+				
+			messagePrompt = f'Enter KEY: '
+			keyStr = input(messagePrompt)
+			
+			messagePrompt = f'Enter VALUE: '
+			valueStr = input(messagePrompt)
+
+			obj[keyStr] = valueStr
+			
+			# ## - 
 			print(json.dumps(obj, indent=4))
 
-			# -- set object variable
+			# # -- set object variable
 			self.selectedObject = obj
+
+			self.writeObjectToFile(ID,obj)
 			
 		else:
 			print("--- try again")
 
 	## END method ----------------------
 
+
+
+	
 	
 	def deleteFile(self,path):
 	
@@ -1225,28 +1279,58 @@ class Nex:
 
 		# get source from name in datasets list
 
+		
+		filename,df,headersDf = self.loadTableToDf('transactions')
+		print(df.info())
+
+		for index, row in headersDf.iterrows():
+			print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
+
+			dtype = row["dtype"]
+			name = row["name"]
+			
+			if dtype == 'datetime64':
+				print('--- datetime64')
+				df[name]= pd.to_datetime(df[name])
+
+			elif dtype == 'int':
+				print("int")
+				df[name] = df[name].astype('int')
+				
+			elif dtype == 'float':
+				print("float")
+				df[name] = df[name].astype('float')
+				
+			elif dtype == 'str':
+				print("str")
+				df[name] = df[name].astype('str')
+			else:
+				print("object")
+				
+		print(df.info())
+			
 		# build filename
 		#print(self.datasetsDf[self.datasetsDf['name'] == 'transactions'])
-		index = self.datasetsDf[self.datasetsDf['name'] == 'transactions'].index
-		self.selectedDatasetIndex = index[0]
-		#print(index[0])
+		# index = self.datasetsDf[self.datasetsDf['name'] == 'transactions'].index
+		# self.selectedDatasetIndex = index[0]
+		# #print(index[0])
 		
-		filename = self.datasetsDf.loc[index[0], 'source']
-		print(filename)
+		# filename = self.datasetsDf.loc[index[0], 'source']
+		# print(filename)
 		
-		location = f'datasets/{filename}'
-		#print(location)
+		# location = f'datasets/{filename}'
+		# #print(location)
 		
-		# read to dataframe using helper functions
-		self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		# # read to dataframe using helper functions
+		# self.tableDf = pd.DataFrame(self.readDataToDf(location))
 		
-		df = self.tableDf
+		# df = self.tableDf
 
-		# Convert datetime 
-		df['Transaction Date']= pd.to_datetime(df['Transaction Date'])
+		# # Convert datetime 
+		# df['Transaction Date']= pd.to_datetime(df['Transaction Date'])
 
-		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
-		headersDf = self.tableHeaderDf
+		# self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		# headersDf = self.tableHeaderDf
 		
 		# df = pd.DataFrame(self.readDataToDf(location))
 		# headersDf = pd.DataFrame(self.readHeadersToDf(location))
