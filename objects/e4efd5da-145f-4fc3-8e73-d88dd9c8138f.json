@@ -1,1 +1,1 @@
-{"ID": "e4efd5da-145f-4fc3-8e73-d88dd9c8138f", "name": "2001 Jeep Wrangler TJ", "make": "Jeep", "model": "Wrangler", "year": "2001", "ignition": { "status": "off", "methods": "toggleIgnition"}}
+{"ID": "e4efd5da-145f-4fc3-8e73-d88dd9c8138f", "name": "2001 Jeep Wrangler TJ", "make": "JEEP", "model": "Wrangler", "year": "2001","VIN": "1J4FA49S71P306148","body_class": "Sport Utility Vehicle","series": "TJ","cylinders": "6","trim": "Sport","drive_type": "4WD","engine_displacement": 4.0, "ignition": { "status": "off", "methods": "toggleIgnition"},"mileage":{"12/10/2022":139358}}

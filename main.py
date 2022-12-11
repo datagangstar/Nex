@@ -65,6 +65,7 @@ class Nex:
 			#'renameColumn',
 			'dropTableColumn',
 			'readRecord',
+			'addTableItem',
 			'deleteRecord',
 			'backToDatasets'
 		])
@@ -194,7 +195,7 @@ class Nex:
 		
 		# show table
 		headersArray = [
-		 "created", "modified", "name", "source"
+		 "ID", "created", "modified", "name", "source"
 		]
 		
 		#print(tabulate(self.datasetsDf[headersArray], headersArray, tablefmt='psql'))
@@ -239,8 +240,10 @@ class Nex:
 		location = f'datasets/{source}'
 		
 		# read to dataframe using helper functions
-		self.tableDf = pd.DataFrame(self.readDataToDf(location))
-		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		name = self.datasetsDf.loc[indexSelection, 'name']
+		self.loadTableToDf(name)
+		#self.tableDf = pd.DataFrame(self.readDataToDf(location))
+		#self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
 
 		# ---
 		
@@ -399,10 +402,25 @@ class Nex:
 		print('writeDatasetsDftoFile()')
 		print('---------')
 
-		# update datesets file
+		df = self.datasetsDf
+
+		df["created"] = pd.to_datetime(df["created"])
+		df["modified"] = pd.to_datetime(df["modified"])
+		
+		df = self.datasetsDf.astype({
+			'ID':'string',
+			'created':'string',
+			'modified':'string',
+			'name':'string',
+			'source':'string',
+			'status':'string'
+		})
+		
+		# safe dataset.xlsx
 		with pd.ExcelWriter('datasets.xlsx') as writer:
-			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
-			#self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
+			df.set_index('ID').to_excel(writer, sheet_name='data')
+
+		df.to_json(r'datasets.json')
 
 	## END method ----------------------
 
@@ -452,19 +470,17 @@ class Nex:
 
 		
 		# --- update dataset
+		self.writeDatasetsDftoFile()
 		
-		# safe dataset.xlsx
-		with pd.ExcelWriter(f'datasets.xlsx') as writer:
-			self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
-			self.headersDf.set_index('name').to_excel(writer, sheet_name='headers')
+
 
 	## END method ----------------------
 
 
 
-
 	
 	def loadTableToDf(self,tableName):
+		print(f'loadTableToDf({tableName})')
 	
 		# build filename
 		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
@@ -475,12 +491,17 @@ class Nex:
 		print(location)
 		
 		# read to dataframe using helper functions
-		self.tableDf = pd.DataFrame(self.readDataToDf(location))
-		#df = self.tableDf
+		df = pd.DataFrame(self.readDataToDf(location))
 
 		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
-		#headersDf = self.tableHeaderDf
+		#headersDf = self.tableHeaderDf'
 
+		print('set type to table df')
+
+
+		
+		#self.tableDf = df
+		
 		return filename,self.tableDf,self.tableHeaderDf
 		
 	## END method ----------------------
@@ -1881,6 +1902,26 @@ class Nex:
 
 		## END method ----------------------
 
+
+	def addTableItem(self):
+		print('\n|\n|\n|')
+		print('addTableItem()')
+		
+		print(self.tableDf)
+		
+		# build filename
+		filename = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
+		
+		# get input
+		df = self.createTableRow(self.tableDf,self.tableHeaderDf)
+
+		# --- write new df to file
+		self.writeTableDftoFile(filename,df,self.tableHeaderDf)
+		
+		## END method ----------------------
+
+	
+			
 
 	def addTableColumn(self):
 		print('\n|\n|\n|')
