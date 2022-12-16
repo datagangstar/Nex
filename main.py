@@ -491,14 +491,20 @@ class Nex:
 		print(location)
 		
 		# read to dataframe using helper functions
-		df = pd.DataFrame(self.readDataToDf(location))
+		self.tableDf = pd.DataFrame(self.readDataToDf(location))
 
 		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		print(self.tableHeaderDf)
 		#headersDf = self.tableHeaderDf'
 
 		print('set type to table df')
+		headerDf = self.tableHeaderDf.copy()
 
+		print(self.tableDf.info())
+		
+		df1 = headerDf.apply(self.formatTableColumn, axis=1)
 
+		print(self.tableDf.info())
 		
 		#self.tableDf = df
 		
@@ -506,6 +512,34 @@ class Nex:
 		
 	## END method ----------------------
 
+
+	def formatTableColumn(self,row):
+		print('\n')
+		print('formatTableColumn()')
+		print(row.dtypes)
+		print(row['name'])
+		print(row['dtype'])
+
+		df = self.tableDf
+
+		colName = row['name']
+		dtype = row['dtype']
+
+		# if 
+		if dtype == 'datetime64':
+			print('format to datetime')
+			df[colName] = pd.to_datetime(df[colName])
+		elif  dtype == 'str':
+			print('format to str')
+			#df[colName] = pd.to_datetime(df[colName])
+			df[colName] = df[colName].astype(str)
+
+		else: 
+			print('do nothing')
+		
+		self.tableDf = df
+		
+	## END method ----------------------
 
 
 
