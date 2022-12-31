@@ -533,7 +533,6 @@ class Nex:
 			print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
 			df[colName] = df[colName].astype(str)
-
 		else: 
 			print('do nothing')
 		
@@ -1846,6 +1845,8 @@ class Nex:
 
 			# drop memo
 			print('drop')
+
+			# loop through list, if exists, drop
 			df.drop(['Transaction Number', 'Memo', 'Balance', 'Check Number', 'Amount Debit', 'Amount Credit', 'Fees  '], axis=1, inplace=True)
 	
 			print(df)
@@ -2328,6 +2329,7 @@ class Nex:
 
 			for idx, x in enumerate(importColumns):
 				print(f'{idx}: {x}')
+
 				rowDict[x] = row[x]
 
 			print(rowDict)
@@ -2338,13 +2340,20 @@ class Nex:
 
 			newDf = pd.concat([newDf, rowDf], ignore_index=True)
 
-		self.tableDf = newDf
+		print(newDf.head())
 
-		# --- build headers
+		# copy new table to global
+		self.tableDf = newDf
+		print(self.tableDf.info())
+
+		# --- format headers
+		headerDf = self.tableHeaderDf.copy()
+		
+		df1 = headerDf.apply(self.formatTableColumn, axis=1)
 		
 		# get headers from new df
-		headers = self.tableDf.columns
-		print(headers)
+		#headers = self.tableDf.columns
+		print(self.tableDf.info())
 
 		# headersDf = pd.DataFrame({
 		#  'name': pd.Series(dtype='str'),
@@ -2352,51 +2361,56 @@ class Nex:
 		#  'alias': pd.Series(dtype='str'),
 		#  'editable': pd.Series(dtype='str')
 		# })
-		print(headers)
+		#print(headers)
 
 		# todo - turn into func and prevent ID, created, modified from being edited
-		tempTableHeaderDf = pd.DataFrame()
-		for idx, x in enumerate(headers):
-			print(f'{idx}: {x}')
+		# tempTableHeaderDf = pd.DataFrame()
+		# for idx, x in enumerate(headers):
+		# 	print(f'{idx}: {x}')
 
-			headerRowDict = {
-				"name": x, 
-				"dtype": 'str', 
-				"alias": x, 
-				"editable": 'TRUE', 
-				"required": 'TRUE', 
-				"default_view": 'TRUE'}
+		# 	headerRowDict = {
+		# 		"name": x, 
+		# 		"dtype": 'str', 
+		# 		"alias": x, 
+		# 		"editable": 'TRUE', 
+		# 		"required": 'TRUE', 
+		# 		"default_view": 'TRUE'}
 
-			tempTableHeaderDf = tempTableHeaderDf.append(headerRowDict,
-			                                             ignore_index=True)
+		# 	tempTableHeaderDf = tempTableHeaderDf.append(headerRowDict,
+		# 	                                             ignore_index=True)
 
-		self.tableHeaderDf = tempTableHeaderDf
+		# self.tableHeaderDf = tempTableHeaderDf
 		print(self.tableHeaderDf)
 		
 		print(self.tableDf)
 
 		# --- create tables
 		
-		# safe dataset
-		self.tableDf = self.tableDf.set_index('ID')
-		self.tableHeaderDf = self.tableHeaderDf.set_index('name')
+		# # save dataset
+		# self.tableDf = self.tableDf.set_index('ID')
+		# self.tableHeaderDf = self.tableHeaderDf.set_index('name')
 
 		print(self.selectedDatasetIndex)
 		source = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
-		filename = f'{source}_{date.today().strftime("%m%d%Y")}.xlsx'
-		print(filename)
+		#filename = f'{source}_{date.today().strftime("%m%d%Y")}.xlsx'
+		print(source)
 
-		with pd.ExcelWriter(f'datasets/{filename}') as writer:
-			self.tableDf.to_excel(writer, sheet_name='data')
-			self.tableHeaderDf.to_excel(writer, sheet_name='headers')
+		filename = f'{source}.xlsx'
+		
+		# write new df to file
+		self.writeTableDftoFile(filename,self.tableDf,self.tableHeaderDf)
+
+		# with pd.ExcelWriter(f'datasets/{filename}') as writer:
+		# 	self.tableDf.to_excel(writer, sheet_name='data')
+		# 	self.tableHeaderDf.to_excel(writer, sheet_name='headers')
 
 		# # update datesets
 
-		self.datasetsDf.loc[self.selectedDatasetIndex, 'source'] = filename
+		#self.datasetsDf.loc[self.selectedDatasetIndex, 'source'] = filename
 		#print(self.datasetsDf.loc[self.selectedDatasetIndex,:])
 
 		# --- update datasets
-		self.writeDatasetsDftoFile()
+		#self.writeDatasetsDftoFile()
 		
 		# with pd.ExcelWriter(f'datasets.xlsx') as writer:
 		# 	self.datasetsDf.set_index('ID').to_excel(writer, sheet_name='data')
