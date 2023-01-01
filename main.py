@@ -500,11 +500,12 @@ class Nex:
 		print('set type to table df')
 		headerDf = self.tableHeaderDf.copy()
 
-		print(self.tableDf.info())
-		
+		#print(self.tableDf.info())
+
+		# format columns on load
 		df1 = headerDf.apply(self.formatTableColumn, axis=1)
 
-		print(self.tableDf.info())
+		#print(self.tableDf.info())
 		
 		#self.tableDf = df
 		
@@ -514,11 +515,11 @@ class Nex:
 
 
 	def formatTableColumn(self,row):
-		print('\n')
-		print('formatTableColumn()')
-		print(row.dtypes)
-		print(row['name'])
-		print(row['dtype'])
+		#print('\n')
+		#print('formatTableColumn()')
+		#print(row.dtypes)
+		#print(row['name'])
+		#print(row['dtype'])
 
 		df = self.tableDf
 
@@ -527,12 +528,20 @@ class Nex:
 
 		# if 
 		if dtype == 'datetime64':
-			print('format to datetime')
+			#print('format to datetime')
 			df[colName] = pd.to_datetime(df[colName])
 		elif  dtype == 'str':
-			print('format to str')
+			#print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
 			df[colName] = df[colName].astype(str)
+		elif  dtype == 'int':
+			#print('format to int')
+			df[colName] = df[colName].astype('int')
+		elif  dtype == 'number':
+			#print('format to str')
+			#df[colName] = pd.to_datetime(df[colName])
+			#df[colName] = df[colName].astype(str)
+			df[colName] = pd.to_numeric(df[colName])
 		else: 
 			print('do nothing')
 		
@@ -1452,11 +1461,14 @@ class Nex:
 			#column = df.columns[index]
 			#df = df[df['Reviewed']]
 			#df = df.dropna(subset=['Reviewed'])
+
+			# 
+			#df['Reviewed'] = df['Reviewed'].astype('int')
 			df = df.loc[df['Reviewed'] == 1]
 
 			# filter by selected MONTH
 			filterDate = self.settingsDict['transactions']['settings']['dateFilter']
-			#print(bool(filterDate))
+			#df['yearMonth'] = df['Transaction Date'].dt.strftime('%Y-%m')
 			
 			if bool(filterDate):
 				df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
@@ -1467,6 +1479,8 @@ class Nex:
 			print('------')
 
 			
+			#set type to float
+			#df['Amount'] = pd.to_numeric(df['Amount'])
 			
 			groupDf = df.groupby('Expense')['Amount'].sum()
 			print(groupDf)
@@ -1532,19 +1546,28 @@ class Nex:
 
 			
 
+			print(df.head())
+			
 			# filter out 
 			#df = df[df['Reviewed'] == True]
 			#df['Reviewed']
 			#df = df[df['Reviewed'] == True]
+			#df['Reviewed'] = df['Reviewed'].astype('int')
 			df = df.loc[df['Reviewed'] == 1]
 
 
 			# filter by selected MONTH
 			filterDate = self.settingsDict['transactions']['settings']['dateFilter']
 			#print(bool(filterDate))
+
+			#df['yearMonth'] = df['Transaction Date'].dt.strftime('%Y-%m')
+			
+			print(df.head())
 			
 			if bool(filterDate):
+				#df = df[df['yearMonth'] == filterDate]
 				df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+
 				print(f'Filter Month: {filterDate}')
 			else:
 				print('no date filter')
@@ -1820,6 +1843,7 @@ class Nex:
 				
 			# load by extension type
 			self.importDf = pd.read_csv(location)
+			print(self.importDf.columns)
 
 			# import file
 			df = self.importDf
@@ -1846,8 +1870,18 @@ class Nex:
 			# drop memo
 			print('drop')
 
+			dropList = [
+				'Transaction Number', 
+				'Memo', 
+				'Balance', 
+				'Check Number', 
+				'Amount Debit', 
+				'Amount Credit', 
+				'Fees  ']
+
 			# loop through list, if exists, drop
-			df.drop(['Transaction Number', 'Memo', 'Balance', 'Check Number', 'Amount Debit', 'Amount Credit', 'Fees  '], axis=1, inplace=True)
+			df = self.dropColumns(df,dropList)
+			#df.drop(dropList, axis=1, inplace=True)
 	
 			print(df)
 			print(df.info())
@@ -1895,6 +1929,19 @@ class Nex:
 		#print(getattr(p1, option, lambda: p1.default)())
 
 	## END method ----------------------
+
+	
+	def dropColumns(self,df,dropList):
+		print('dropColumns()')
+
+		for x in dropList:
+			print(x)
+			if x in df.columns:
+				df.drop(x, axis=1, inplace=True)
+	
+		return df
+
+		## END method ----------------------
 
 	
 	def convertColumnValues(self,df,colname,previousValue,newValue):
