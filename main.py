@@ -66,6 +66,7 @@ class Nex:
 			'dropTableColumn',
 			'readRecord',
 			'addTableItem',
+			'linkTableItem',
 			'deleteRecord',
 			'backToDatasets'
 		])
@@ -82,7 +83,7 @@ class Nex:
 
 	# called externally but doing nothing but creating a space
 	def getNavigation(self):
-		str = ''
+		str = 'Nav: '
 		# if not self.selectedRecordIndex:
 		# 	datasetname = self.datasetsDf.loc[self.selectedDatasetIndex, 'name']
 		# 	str = f'Navigation: {datasetname}'
@@ -251,7 +252,7 @@ class Nex:
 		headersArray = self.getTableDefaultHeaders()
 		
 		# viewHeaders = self.datasetsDf.loc[indexSelection, 'default_table']
-		print(headersArray)
+		#print(headersArray)
 		# a_list = ast.literal_eval(viewHeaders)
 		#viewheadersArr = viewHeaders[1:-1].split(',')
 
@@ -480,7 +481,7 @@ class Nex:
 
 	
 	def loadTableToDf(self,tableName):
-		print(f'loadTableToDf({tableName})')
+		print(f'---> loadTableToDf({tableName})')
 	
 		# build filename
 		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
@@ -494,7 +495,7 @@ class Nex:
 		self.tableDf = pd.DataFrame(self.readDataToDf(location))
 
 		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
-		print(self.tableHeaderDf)
+		#print(self.tableHeaderDf)
 		#headersDf = self.tableHeaderDf'
 
 		print('set type to table df')
@@ -1619,23 +1620,25 @@ class Nex:
 			# loop through records not reviewed,
 			#print(f'--- {feature[index]}')
 
-			df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
-			df = df.sort_values(by='Transaction Date', ascending=True)
+			#df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
 
 			
 			# filter by selected MONTH
 			filterDate = self.settingsDict['transactions']['settings']['dateFilter']
 			#print(bool(filterDate))
 			
+			
 			if bool(filterDate):
+				# do not save the report df
 				reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 				print(f'Filter Month: {filterDate}')
 			else:
-				reportDf = df
 				print('no date filter')
+				reportDf = df.copy()
 
 			print('------')
 
+			reportDf = reportDf.sort_values(by='Transaction Date', ascending=True)
 			
 
 			headersArray = [
@@ -1648,7 +1651,7 @@ class Nex:
 			]
 			#print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
 			
-			self.printFormattedTable(df,headersArray)
+			self.printFormattedTable(reportDf,headersArray)
 			#print(df.info())
 
 			# select index
@@ -2003,6 +2006,60 @@ class Nex:
 		## END method ----------------------
 
 	
+	def linkTableItem(self):
+		print('\n|\n|\n|')
+		print('linkTableItem()')
+		
+		df = self.tableDf
+		print(df)
+		
+		# get default table columns and print formatted table
+		self.printFormattedTable(df,self.getTableDefaultHeaders())
+
+		# select table id
+		
+		# get index input
+		inputMessagePrompt = f'Select table id: '
+		tableIndexSelection = int(input(inputMessagePrompt))
+		print(f'table id: {tableIndexSelection}')
+		
+		# select dataset id
+		for index, row in self.datasetsDf.iterrows():
+			print(f'{index}: {row["name"]}')
+			
+		# get index input
+		inputMessagePrompt = f'Select Dataset: '
+		indexSelection = int(input(inputMessagePrompt))
+
+		
+		# select link table id
+
+		# update table with link table id
+		# update link table with table id
+
+		# OR update
+		# id, item, link
+
+	
+
+
+
+
+
+
+
+
+
+		
+		# --- write new df to file
+		#self.writeTableDftoFile(filename,df,self.tableHeaderDf)
+		
+		## END method ----------------------
+
+	
+	def printSet(self):
+	
+		## END method ----------------------
 			
 
 	def addTableColumn(self):
@@ -2592,52 +2649,77 @@ class Nex:
 
 # --- END CLASS ------------------------------------------------------------------------ #
 
-p1 = Nex()
+			
+# init objct
+nex = Nex()
 
 
 # todo - move out of class
 def initateUserInput():
 
-	# get current options list from class
-	# optionsList = p1.getPromptOptions()
-	# numMethods = int(len(optionsList))
-	# print(f'numMethods: {numMethods}')
+	# new features
+	# - back option
+	# - last selected option
+	# - 
+	
+	# - field app
 
-	inputMessagePrompt = 'Select option:'
 
+	
 	while True:
 
-		optionsList = p1.getPromptOptions()
+		# get list of prompt options
+		optionsList = nex.getPromptOptions()
+		
+		# product options list
+		buildOptionsList(optionsList)
+		
+		# list length to int
 		numMethods = int(len(optionsList))
-		#print(f'numMethods: {numMethods}')
-		print(p1.getNavigation())
-		print(f'-----------')
-		print(f'Menu')
-
-		print(f'-----------')
-		# show options
-		for idx, x in optionsList.items():
-			print(f'{idx}: {x}')
-
-		print(f'-----------')
-
-		# strIn = raw_input("Enter text: ");
+	
+		# get option selection
+		inputMessagePrompt = 'Select option:'
 		resDict = processUserInput(inputMessagePrompt)
-		#print(resDict)
+		
 		if resDict['valid']:
 			optionNumber = int(resDict['value'])
+			
 			#print(f'optionNumber: {optionNumber} -- numMethods: {numMethods}')
 			if (optionNumber <= numMethods):
 				# break;
-				option = optionsList.get(optionNumber, '')
-				print(f'Selected option: {option}')
+				objAttribute = optionsList.get(optionNumber, '')
+				print(f'Selected option: {objAttribute}')
 				print(f'-----------')
-				print(getattr(p1, option, lambda: p1.default)())
+				print(getattr(nex, objAttribute, lambda: nex.default)())
+				#print(getattr(p1, objAttribute, 'test default'))
 
+				
 	## END method ----------------------
 
+# scenarios
+# 1 printDataSets
+# 2 viewDataset, 3 stocks
 
-# todo - move out of class
+
+def buildOptionsList(optionsList):
+
+	print(f'-----------')
+	print(nex.getNavigation())
+	print(f'Menu')
+
+	print(f'-----------')
+	
+	
+	# show options
+	for idx, x in optionsList.items():
+		print(f'{idx}: {x}')
+
+	print(f'-----------')
+	
+	## END method ----------------------
+
+	
+
 def processUserInput(message):
 
 	# set up return
@@ -2655,4 +2737,16 @@ def processUserInput(message):
 	return retDict
 
 
+# start user input 
 initateUserInput()
+
+
+# test adding dataset
+
+
+
+# def get_country(location):
+#     try:
+#         return location['country']
+#     except Exception:
+#         return 'n/a'
