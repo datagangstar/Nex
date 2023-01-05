@@ -2057,11 +2057,6 @@ class Nex:
 		## END method ----------------------
 
 	
-	def printSet(self):
-	
-		## END method ----------------------
-			
-
 	def addTableColumn(self):
 		print('\n|\n|\n|')
 		print('addTableColumn()')
