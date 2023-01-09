@@ -22,7 +22,7 @@ import json
 class Nex:
 
 	def __init__(self):
-		print('__init__()')
+		print('__init__Nex()')
 
 		# load datasets data & meta
 		self.datasetsDf = pd.DataFrame(self.readDataToDf('datasets.xlsx'))
@@ -149,26 +149,27 @@ class Nex:
 	# -------------
 	# datasets methods
 	# -------------
-	def snippetTest(self):
+	def runSnippet(self):
+		print('snippetTest()')
 
 		headers = self.datasetsDf.columns
 		print(headers)
 
-		headerDict = dict()
-		for idx, x in enumerate(headers):
-			headerDict[idx]['name'] = x
-			if x == 'name':
-				headerDict[idx]['dtype'] = 'str'
-			else:
-				headerDict[idx]['dtype'] = 'int'
-			headerDict[idx]['alias'] = x
-			if x == 'name':
-				headerDict[idx]['editable'] = 'True'
-			else:
-				headerDict[idx]['editable'] = 'False'
-			headerDict[idx]['picklist'] = ''
+		# headerDict = dict()
+		# for idx, x in enumerate(headers):
+		# 	headerDict[idx]['name'] = x
+		# 	if x == 'name':
+		# 		headerDict[idx]['dtype'] = 'str'
+		# 	else:
+		# 		headerDict[idx]['dtype'] = 'int'
+		# 	headerDict[idx]['alias'] = x
+		# 	if x == 'name':
+		# 		headerDict[idx]['editable'] = 'True'
+		# 	else:
+		# 		headerDict[idx]['editable'] = 'False'
+		# 	headerDict[idx]['picklist'] = ''
 
-		print(headerDict)
+		# print(headerDict)
 
 	## END method ----------------------
 
