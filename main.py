@@ -1,13 +1,14 @@
 import Nex
+import re
 import nexus
 
 
 
 # nexus prototype
-nexUI = nexus.UI()
+#nexUI = nexus.UI()
 
 # init objct nex r&d
-#nex = Nex.Nex()
+nex = Nex.Nex()
 
 
 # todo - move out of class
@@ -94,7 +95,7 @@ def processUserInput(message):
 
 
 # start user input 
-#initateUserInput()
+initateUserInput()
 
 
 # test adding dataset
