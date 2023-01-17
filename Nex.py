@@ -1750,7 +1750,7 @@ class Nex:
 			print('--- creditImportMacroAmazon')
 
 			
-			testFilename = 'Chase3439.csv'
+			testFilename = 'Chase3439.CSV'
 			extension = testFilename.split(".")
 			print(extension)
 
@@ -1789,7 +1789,7 @@ class Nex:
 			# filterDateRange
 			print('--- creditImportMacroSapphire')
 
-			testFilename = 'Chase9901.csv'
+			testFilename = 'Chase9901.CSV'
 			extension = testFilename.split(".")
 			print(extension)
 

@@ -5,10 +5,10 @@ import nexus
 
 
 # nexus prototype
-#nexUI = nexus.UI()
+nexUI = nexus.UI()
 
 # init objct nex r&d
-nex = Nex.Nex()
+##nex = Nex.Nex()
 
 
 # todo - move out of class
@@ -94,8 +94,8 @@ def processUserInput(message):
 	return retDict
 
 
-# start user input 
-initateUserInput()
+# start user input -proof of concept Nex
+##initateUserInput()
 
 
 # test adding dataset

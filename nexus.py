@@ -1,19 +1,27 @@
 import pandas as pd
 import re
 import Nex
+from applications import Finances
+
+
+
+# create class dynamically
+# https://www.geeksforgeeks.org/create-classes-dynamically-in-python/
+
+#core = type('', (), {})()
+#apps = type('', (), {})()
 
 class UI:
 
 	def __init__(self):
 		print('__init__UI()')
 
-		
 		self.mainMenu = pd.Series([
 			'Datasets',
-			#'Market', 
+			'Market', 
 			'Applications',
-			#'Components',
-			#'Mods',
+			'Components',
+			'Mods',
 			'Settings'
 		])
 
@@ -26,6 +34,10 @@ class UI:
 		# set table name
 		self._tableName = ''
 		
+		# set table name
+		self._appName = ''
+		self._appObject = type('', (), {})()
+		
 		# set record name
 		self._recordName = ''
 		
@@ -35,7 +47,7 @@ class UI:
 		self.menuSelection = ''
 
 		# init Nex - TURN OFF WHEN DONE CONVERTING
-		nex = Nex.Nex()
+		#nex = Nex.Nex()
 		
 		# init Core
 		core = Core()
@@ -88,6 +100,7 @@ class UI:
 						elif optionNumber == 2:
 							print('--- Applications')
 							# get datasets list options
+							self.displayList = apps.getAppsList()
 							
 							# get datasets list options
 							self.promptOptions = apps.getAppMethods()
@@ -126,7 +139,26 @@ class UI:
 							print(f'--- Applications:{objAttribute}()')
 							# get applications list options
 
-							print(getattr(apps, objAttribute, lambda: apps.default)())
+
+							if self.appName == '':
+								print('no app selected')
+								getattr(apps, objAttribute, lambda: apps.default)(self)
+							else: 
+								print(f'app selected: {self.appName}.{objAttribute}()')
+								# if app is selected, 
+									# get class menu and display list
+									# send selection to application
+								#classStr = self.appName
+								#classInstance = eval(classStr)()
+								#klass = type(classInstance)
+								classObj = self.appObject
+								#print(classObj)	
+								
+								getattr(classObj, objAttribute, lambda: classObj.default)()
+							
+
+								# send selected method
+								
 							
 						elif self.menuSelection == 'Components':
 							print('--- Components')
@@ -143,14 +175,15 @@ class UI:
 						else: 
 							print('invalid selection')
 
-		## END INIT method ----------------------			
+	## END INIT method ----------------------			
 
 							
 	# getter ------
 	@property
 	def promptOptions(self):
 		return self._promptOptions
-		## END method ----------------------
+	
+	## END method ----------------------
 
 	# setter
 	@promptOptions.setter
@@ -158,13 +191,14 @@ class UI:
 		print('setPromptOptions(setPromptOptions)')
 		self._promptOptions = optionsList
 		
-		## END method ----------------------
+	## END method ----------------------
 
 	# getter ------
 	@property
 	def displayList(self):
 		return self._displayList
-		## END method ----------------------
+		
+	## END method ----------------------
 
 	# setter
 	@displayList.setter
@@ -172,13 +206,14 @@ class UI:
 		print('set displayList(displayList)')
 		self._displayList = displayList
 		
-		## END method ----------------------
+	## END method ----------------------
 		
 	# getter ------
 	@property
 	def tableName(self):
 		return self._tableName
-		## END method ----------------------
+	
+	## END method ----------------------
 
 	# setter
 	@tableName.setter
@@ -186,13 +221,45 @@ class UI:
 		print('set tableName(name)')
 		self._tableName = name
 		
-		## END method ----------------------
+	## END method ----------------------
+		
+	# getter ------
+	@property
+	def appName(self):
+		return self._appName
+	
+	## END method ----------------------
+
+	# setter
+	@appName.setter
+	def appName(self, name):
+		print('set appName(name)')
+		self._appName = name
+		
+	## END method ----------------------
+
+		
+	# getter ------
+	@property
+	def appObject(self):
+		return self._appObject
+	
+	## END method ----------------------
+
+	# setter
+	@appObject.setter
+	def appObject(self, object):
+		print('set appObject(name)')
+		self._appObject = object
+		
+	## END method ----------------------
 		
 	# getter ------
 	@property
 	def recordName(self):
 		return self._recordName
-		## END method ----------------------
+		
+	## END method ----------------------
 
 	# setter
 	@recordName.setter
@@ -200,11 +267,12 @@ class UI:
 		print('set recordName(name)')
 		self._recordName = name
 		
-		## END method ----------------------
+	## END method ----------------------
 
 
 		
 	def buildOptionsList(self, optionsList):
+		print(f'buildOptionsList()')
 	
 		print(f'\n\n')
 		print(f'----------------------')
@@ -213,9 +281,10 @@ class UI:
 		if self.menuSelection == '': 
 			print(f'Menu')
 		else: 
-			print(self.menuSelection)
+			print(f'self.menuSelection: {self.menuSelection}')
 			#if not self.tableName == '': 
-			print(self.tableName)
+			print(f'self.tableName: {self.tableName}')
+			print(f'self.appName: {self.appName}')
 
 		print(f'-----------')
 		
@@ -229,10 +298,11 @@ class UI:
 	
 		print(f'-----------')
 		
-		## END method ----------------------
+	## END method ----------------------
 
 	
 	def processUserInput(self, message):
+		print(f'processUserInput()')
 	
 		# set up return
 		retDict = {'valid': True}
@@ -250,9 +320,14 @@ class UI:
 			retDict['value'] = inputValue
 	
 		return retDict
-		## END method ----------------------
+	## END method ----------------------
 
 		
+	def printFormattedTable(self,df,headersArray):
+		
+		print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
+
+	## END method ----------------------
 		
 ## END Class ======
 
@@ -299,16 +374,20 @@ class Core:
 		self.tableDf = pd.DataFrame()
 		self.tableHeaderDf = pd.DataFrame()
 		
-		## END INIT method ----------------------	
+	## END INIT method ----------------------	
 
 		
 	# called externally
 	def getDatasetMethods(self):
 		return self.datasetsMethods
 
+	## END method ----------------------
+		
 	# called externally
 	def getDatasetDf(self):
 		return self.datasetsDf
+		
+	## END method ----------------------
 		
 	# -------------
 	# datasets init
@@ -329,7 +408,7 @@ class Core:
 			print("ERROR: Unable to find or access file:", e)
 			pass
 
-		## END method ----------------------
+	## END method ----------------------
 
 	# called in init
 	def readHeadersToDf(self, file):
@@ -345,7 +424,87 @@ class Core:
 
 	## END method ----------------------
 
+	
+	def formatTableColumn(self,row):
+		#print('\n')
+		#print('formatTableColumn()')
+		#print(row.dtypes)
+		#print(row['name'])
+		#print(row['dtype'])
+
+		df = self.tableDf
+
+		colName = row['name']
+		dtype = row['dtype']
+
+		# if 
+		if dtype == 'datetime64':
+			#print('format to datetime')
+			df[colName] = pd.to_datetime(df[colName])
+		elif  dtype == 'str':
+			#print('format to str')
+			#df[colName] = pd.to_datetime(df[colName])
+			df[colName] = df[colName].astype(str)
+		elif  dtype == 'int':
+			#print('format to int')
+			df[colName] = df[colName].astype('int')
+		elif  dtype == 'number':
+			#print('format to str')
+			#df[colName] = pd.to_datetime(df[colName])
+			#df[colName] = df[colName].astype(str)
+			df[colName] = pd.to_numeric(df[colName])
+		else: 
+			print('do nothing')
+		
+		self.tableDf = df
+		
+	## END method ----------------------
 			
+	def loadTableToDf(self,tableName):
+		print(f'---> loadTableToDf({tableName})')
+	
+		# build filename
+		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
+		self.selectedDatasetIndex = index[0]
+
+		filename = self.datasetsDf.loc[index[0], 'source']
+		location = f'datasets/{filename}'
+		print(location)
+		
+		# read to dataframe using helper functions
+		self.tableDf = pd.DataFrame(self.readDataToDf(location))
+
+		self.tableHeaderDf = pd.DataFrame(self.readHeadersToDf(location))
+		#print(self.tableHeaderDf)
+		#headersDf = self.tableHeaderDf'
+
+		print('set type to table df')
+		headerDf = self.tableHeaderDf.copy()
+
+		#print(self.tableDf.info())
+
+		# format columns on load
+		df1 = headerDf.apply(self.formatTableColumn, axis=1)
+
+		#print(self.tableDf.info())
+		
+		#self.tableDf = df
+		
+		return filename,self.tableDf,self.tableHeaderDf
+		
+	## END method ----------------------
+			
+	def getTableDefaultHeaders(self):
+		headerArray = []
+		for index, row in self.tableHeaderDf.iterrows():
+			if row["default_view"]:
+				headerArray.append(row["name"])
+		
+		return headerArray
+		
+	## END method ----------------------
+
+		
 	# called in createDataset
 	def writeTableDftoFile(self, filename, tableDf, tableHeaderDf):
 		
@@ -358,7 +517,7 @@ class Core:
 			tableHeaderDf.to_excel(writer, sheet_name='headers')
 
 	## END method ----------------------
-			
+		
 
 	# -------------
 	# datasets methods
@@ -453,7 +612,7 @@ class Core:
 		# get table meta, loop through & print each attribute
 		#print(self.tableHeaderDf)
 
-		## END method ----------------------
+	## END method ----------------------
 
 
 	def deleteRecord(self):
@@ -520,8 +679,7 @@ class Core:
 			self.tableDf.set_index('ID').to_excel(writer, sheet_name='data')
 			self.tableHeaderDf.set_index('name').to_excel(writer, sheet_name='headers')
 
-		## END method ----------------------
-
+	## END method ----------------------
 
 
 		
@@ -537,73 +695,201 @@ class Apps:
 
 		self.appMethods = pd.Series([
 			'runSnippet',
-			'listApps', 
+			#'listApps', 
 			'selectApp',
 			'createApp',
 			'deleteApp'
 		])
-		#self.promptOptions = self.appMethods
-
+		
 		self.appsList = pd.Series([
 			'stocks',
-			'donations', 
-			'bodyFat',
-			'transactions',
-			'taxes',
-			'contacts',
-			'objects'
+			#'donations', 
+			#'bodyFat',
+			'Finances',
+			'Taxes'
+			#'contacts',
+			#'objects'
 		])
 		
+		self.promptOptions = self.appMethods
+		
 
+	## END method ----------------------
+		
+	# ------ getters & setters
+
+	# called externally
+	def getAppsList(self):
+		self.promptOptions = self.appMethods
+		return self.appsList
+
+	## END method ----------------------
+		
 	# called externally
 	def getAppMethods(self):
 		return self.appMethods
 		
+	## END method ----------------------
+		
+
+		
+	# ------ methods
+		
+		
+	def runSnippet(self):	
+		print(f'runSnippet()')
+		
+	## END method ----------------------
+
+		
 	# called externally
-	def listApps(self):
-		return self.appsList
-	
-	# called externally
-	def selectApp(self):
+	def selectApp(self,UIClass):
 		#print(self.appsList)
-		UI.promptOptions = self.appsList
+		#UI.promptOptions = self.appsList
 		#UI.promptOptions(UI, self.appsList)
 
+		# get user input on app from menu list
+		"""Code Summary
+			get user input
+   			init app class 
+	  		transfer UI control to app class
+		"""
+		
+		# select index
+		messagePrompt = f'select application from list: '
+		listIndex = int(input(messagePrompt))
+
+		
+		classStr = self.appsList.get(listIndex, '')
+		#print(classStr)
+
+		# set app name in UI class
+		UIClass.appName = classStr
+
+		# init app class
+		classInstance = eval(classStr)()
+		#print(classInstance)
+		#klass = type(classInstance)
+		#print(UIClass)
+		#print(klass)
+		#print(classInstance.appMethods)
+
+		# store app class in UI
+		UIClass.appObject = classInstance
+
+		# set display list
+		UIClass.displayList = []
+		
+		# get datasets list options
+		UIClass.promptOptions = classInstance.appMethods
+		
+		#klass = type(classInstance, (object,), {'UI': UIClass})
+		
+		#getattr(classInstance, 'test', lambda: classInstance.default)()
+		#print(getattr(core, objAttribute, lambda: core.default)())
+
+	## END method ----------------------
+
+		
+	def createApp(self):	
+		print(f'createApp()')
+		
+	## END method ----------------------
+		
+	def deleteApp(self):	
+		print(f'deleteApp()')
+		
+	## END method ----------------------
+
+		
+## END Apps Class ======
+
+
+
+
+
+
+class Taxes:
+
+	"""Code Summary
+	check for required tables
+ 		create tables if need
+   	
+	"""
 	
-	def taxes(self):
-		print('\n')
-		print('taxes()')
-		print('---------')
+	def __init__(self):
+		print('__init__Taxes()')
 
-		# --- select table
+		self.methods = pd.Series([
+			'setYear',
+			'viewIncome',
+			'totalIncome',
+		])
+		
+		# init Core
+		core = Core()
+		
+		# --- check table
 		tableName = 'transactions'
-		#filename,df,headersDf = core.loadTableToDf(tableName)
-		
-		# --- build select options
-		print('---------')
+		print(tableName)
+		filename,df,headersDf = core.loadTableToDf(tableName)
+		print(df.head())
+		print(filename)
 
-		# selectedMethod = 'selectObj'
-		
-		# -- select object
-		# if bool(self.selectedObject):
-		# 	selectedMethod = 'clearObj'
 
-		# index = core.promptAppFeatures([
-		# 	'snippet',
-		# 	'viewObjects',
-		# 	'addObject',
-		# 	'deleteObject',
-		# 	'selectedMethod',
-		# 	'addObjectItem'
-		# ])
+		# create dataset if needed
 
-		# --- filter methods
 		
-		if index == 0:
-			print('--- snippet()')
-			print('------')
+		# init Apps
+		#apps = Apps()
+		
+		#UI.displayList = self.methods
+		#UI.promptOptions = self.methods
+		#ui = UI()
+		#UI.buildOptionsList(self.methods)
+
+		optionsList = self.methods
+		# show options
+		for idx, x in optionsList.items():
+			print(f'{idx}: {x}')
 			
-		else:
-			print("--- try again")
+		# get user method select
+		messagePrompt = f'select function: '
+		listIndex = int(input(messagePrompt))
 		
-## END Class ======
+		objAttribute = optionsList.get(listIndex, '')
+
+		print(getattr(self, objAttribute)(df))
+		
+	## END method ----------------------
+
+		
+	def setYear(self):
+		print(f'setYear()')
+
+	## END method ----------------------
+		
+	def viewIncome(self):
+		print('viewIncome()')
+
+	## END method ----------------------
+		
+	def totalIncome(self,df):
+		print('totalIncome()')
+
+		
+		df = df.loc[df['Reviewed'] == 1]
+		df = df.loc[df['Expense'] == "Income"]
+		
+		#df = df[df['Transaction Date'].dt.strftime('%Y') == 2022]
+		print(df)
+
+		groupDf = df.groupby('Account')['Amount'].sum()
+		print(groupDf)
+
+	## END method ----------------------
+		
+## END Taxes Class ======
+
+
+
