@@ -218,7 +218,7 @@ class UI:
 	# setter
 	@tableName.setter
 	def tableName(self, name):
-		print('set tableName(name)')
+		print(f'set tableName({name})')
 		self._tableName = name
 		
 	## END method ----------------------
@@ -233,7 +233,7 @@ class UI:
 	# setter
 	@appName.setter
 	def appName(self, name):
-		print('set appName(name)')
+		print(f'set appName({name})')
 		self._appName = name
 		
 	## END method ----------------------
@@ -249,7 +249,7 @@ class UI:
 	# setter
 	@appObject.setter
 	def appObject(self, object):
-		print('set appObject(name)')
+		print(f'set appObject({object})')
 		self._appObject = object
 		
 	## END method ----------------------
@@ -858,8 +858,9 @@ class Taxes:
 		listIndex = int(input(messagePrompt))
 		
 		objAttribute = optionsList.get(listIndex, '')
+		print(objAttribute)
 
-		print(getattr(self, objAttribute)(df))
+		getattr(self, objAttribute)(df)
 		
 	## END method ----------------------
 
@@ -886,6 +887,9 @@ class Taxes:
 
 		groupDf = df.groupby('Account')['Amount'].sum()
 		print(groupDf)
+		
+		codeStr = "df.groupby('Account')['Amount'].sum()"
+		eval(codeStr)
 
 	## END method ----------------------
 		
