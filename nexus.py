@@ -887,9 +887,11 @@ class Taxes:
 
 		groupDf = df.groupby('Account')['Amount'].sum()
 		print(groupDf)
-		
-		codeStr = "df.groupby('Account')['Amount'].sum()"
-		eval(codeStr)
+
+		# save this as a metric in the app, make accessable by other other apps
+		codeStr = """print(df.groupby('Account')['Amount'].sum())"""
+  			
+		exec(codeStr)
 
 	## END method ----------------------
 		
