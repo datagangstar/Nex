@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import Nex
 from applications import Finances
+from applications import Taxes
 
 
 
@@ -761,13 +762,13 @@ class Apps:
 
 		
 		classStr = self.appsList.get(listIndex, '')
-		#print(classStr)
+		print(f'classStr: {classStr}')
 
 		# set app name in UI class
 		UIClass.appName = classStr
 
 		# init app class
-		classInstance = eval(classStr)()
+		classInstance = eval(classStr)(Core())
 		#print(classInstance)
 		#klass = type(classInstance)
 		#print(UIClass)
@@ -808,94 +809,6 @@ class Apps:
 
 
 
-
-class Taxes:
-
-	"""Code Summary
-	check for required tables
- 		create tables if need
-   	
-	"""
-	
-	def __init__(self):
-		print('__init__Taxes()')
-
-		self.methods = pd.Series([
-			'setYear',
-			'viewIncome',
-			'totalIncome',
-		])
-		
-		# init Core
-		core = Core()
-		
-		# --- check table
-		tableName = 'transactions'
-		print(tableName)
-		filename,df,headersDf = core.loadTableToDf(tableName)
-		print(df.head())
-		print(filename)
-
-
-		# create dataset if needed
-
-		
-		# init Apps
-		#apps = Apps()
-		
-		#UI.displayList = self.methods
-		#UI.promptOptions = self.methods
-		#ui = UI()
-		#UI.buildOptionsList(self.methods)
-
-		optionsList = self.methods
-		# show options
-		for idx, x in optionsList.items():
-			print(f'{idx}: {x}')
-			
-		# get user method select
-		messagePrompt = f'select function: '
-		listIndex = int(input(messagePrompt))
-		
-		objAttribute = optionsList.get(listIndex, '')
-		print(objAttribute)
-
-		getattr(self, objAttribute)(df)
-		
-	## END method ----------------------
-
-		
-	def setYear(self):
-		print(f'setYear()')
-
-	## END method ----------------------
-		
-	def viewIncome(self):
-		print('viewIncome()')
-
-	## END method ----------------------
-		
-	def totalIncome(self,df):
-		print('totalIncome()')
-
-		
-		df = df.loc[df['Reviewed'] == 1]
-		df = df.loc[df['Expense'] == "Income"]
-		
-		#df = df[df['Transaction Date'].dt.strftime('%Y') == 2022]
-		print(df)
-
-		groupDf = df.groupby('Account')['Amount'].sum()
-		print(groupDf)
-
-		# save this as a metric in the app, make accessable by other other apps
-		codeStr = """print(df.groupby('Account')['Amount'].sum())"""
-  			
-		exec(codeStr)
-
-	## END method ----------------------
-		
-## END Taxes Class ======
 
 
 
