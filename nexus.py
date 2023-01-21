@@ -1,6 +1,8 @@
 import pandas as pd
 import re
 import Nex
+from tabulate import tabulate # printing tables
+
 from applications import Finances
 from applications import Taxes
 
@@ -338,6 +340,8 @@ class Core:
 
 	def __init__(self):
 		print('__init__Core()')
+
+		self.UI = UI
 
 		self.datasetsMethods = pd.Series([
 			'runSnippet',

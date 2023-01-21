@@ -1,5 +1,7 @@
 import pandas as pd
 import re
+from datetime import date
+from tabulate import tabulate # printing tables
 
 # get list of class methods
 # https://www.askpython.com/python/examples/find-all-methods-of-class#:~:text=To%20list%20the%20methods%20for%20this%20class%2C%20one%20approach%20is,and%20properties%20of%20the%20class.
@@ -48,11 +50,46 @@ class Finances(Application):
    	
 	"""
 	
-	def __init__(self):
+	def __init__(self,core):
 		print('__init__Finances()')
+
+		self.core = core
 
 		# init app parent
 		super().__init__()
+
+		filename,df,headersDf = core.loadTableToDf('transactions')
+		self.df = df
+		self.headersDf = headersDf
+		print(df.info())
+
+		
+		for index, row in headersDf.iterrows():
+			print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
+
+			dtype = row["dtype"]
+			name = row["name"]
+			
+			if dtype == 'datetime64':
+				print('--- datetime64')
+				df[name]= pd.to_datetime(df[name])
+
+			elif dtype == 'int':
+				print("int")
+				df[name] = df[name].astype('int')
+				
+			elif dtype == 'float':
+				print("float")
+				df[name] = df[name].astype('float')
+				
+			elif dtype == 'str':
+				print("str")
+				df[name] = df[name].astype('str')
+			else:
+				print("object")
+				
+		print(df.info())
+		
 		
 		methods = pd.Series([
 			'sumGroup', 
@@ -75,6 +112,24 @@ class Finances(Application):
 		#self.appMethods = methods
 
 		#self.appMethods()
+		
+		self.settingsDict = {}
+
+		if len(self.settingsDict) == 0:
+
+			monthTimeDate = date.today().strftime("%Y-%m")
+			print(f'Default Filter Month: {monthTimeDate}')
+		
+			settingsDict = self.settingsDict
+			setting = {"dateFilter": ''}
+			settings = {"settings": setting}
+			settingsDict['transactions'] = settings
+			print(settingsDict)
+			self.settingsDict = settingsDict
+			print(self.settingsDict['transactions']['settings']['dateFilter'])
+		else: 
+			print('settings not empty')
+			print(self.settingsDict)
 		
 	## END INIT method ----------------------
 
@@ -110,9 +165,38 @@ class Finances(Application):
 
 	## END method ----------------------
 
-	def viewTrans(self,df):
+	def viewTrans(self):
 		print('viewTrans()')
 
+		df = self.df
+		
+		df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
+		df = df.sort_values(by='Transaction Date', ascending=True)
+
+		# filter by selected MONTH
+		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		#print(bool(filterDate))
+		
+		if bool(filterDate):
+			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+			print(f'Filter Month: {filterDate}')
+		else:
+			print('no date filter')
+
+		print('------')
+
+		# get report table columns
+		# headersArray = [
+		#  'Amount', 'Description', 'Expense', 'Transaction Date', 'Reviewed', 'Card'
+		# ]
+		headersArray = self.core.getTableDefaultHeaders()
+		print(headersArray)
+
+		# print report talbe
+		UI = self.core.UI
+		UI.printFormattedTable(self,df,headersArray)
+
+		#print(tabulate(df[self.core.getTableDefaultHeaders()], self.core.getTableDefaultHeaders(), tablefmt='psql'))
 
 	## END method ----------------------
 
