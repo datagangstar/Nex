@@ -1711,8 +1711,7 @@ class Nex:
 			# update Expense Type
 			# set as reviewed
 			df.loc[recordIndex, 'Expense'] = newValue
-			df.loc[recordIndex,
-			                 'modified'] = date.today().strftime("%m/%d/%Y")
+			df.loc[recordIndex, 'modified'] = date.today().strftime("%m/%d/%Y")
 			df.loc[recordIndex, 'Reviewed'] = True
 			print(df.loc[recordIndex])
 

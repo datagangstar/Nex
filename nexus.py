@@ -575,6 +575,20 @@ class Core:
 
 
 
+	def dropColumns(self,df,dropList):
+		print('dropColumns()')
+
+		for x in dropList:
+			print(x)
+			if x in df.columns:
+				df.drop(x, axis=1, inplace=True)
+	
+		return df
+
+	## END method ----------------------
+
+
+		
 
 
 	# -------------
@@ -688,7 +702,7 @@ class Core:
 
 
 		
-## END Class ======
+## END Core Class ======
 
 
 
