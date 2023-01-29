@@ -3,6 +3,7 @@ import re
 import uuid
 from datetime import date
 from tabulate import tabulate # printing tables
+import json
 
 # get list of class methods
 # https://www.askpython.com/python/examples/find-all-methods-of-class#:~:text=To%20list%20the%20methods%20for%20this%20class%2C%20one%20approach%20is,and%20properties%20of%20the%20class.
@@ -19,7 +20,6 @@ class Application:
 	
 	def __init__(self):
 		print('__init__Applications()')
-
 		
 		self.methods = pd.Series([
 			'back'
@@ -34,13 +34,125 @@ class Application:
 	def loadSettings(self):
 		return self.methods
 
+	## END method ----------------------
 	
 	def getMethods(self):
 		return self.methods
 
+	## END method ----------------------
+
 		
+	def formatTable(self,df,headersDf):
+		
+		for index, row in headersDf.iterrows():
+			print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
+
+			dtype = row["dtype"]
+			name = row["name"]
+			
+			if dtype == 'datetime64':
+				print('--- datetime64')
+				df[name]= pd.to_datetime(df[name])
+
+			elif dtype == 'int':
+				print("int")
+				df[name] = df[name].astype('int')
+				
+			elif dtype == 'float':
+				print("float")
+				df[name] = df[name].astype('float')
+				
+			elif dtype == 'str':
+				print("str")
+				df[name] = df[name].astype('str')
+			else:
+				print("object")
+				
+		return df
+
+	## END method ----------------------
+
+
 		
 ## END Taxes Class ======
+
+
+
+class Donations(Application):
+	
+	def __init__(self,core):
+		print('__init__Donations()')
+
+		self.core = core
+
+		# init app parent
+		super().__init__()
+
+		filename,df,headersDf = core.loadTableToDf('transactions')
+		
+		self.filename = filename
+		self.tableDf = super().formatTable(df,headersDf)
+		self.tableHeaderDf = headersDf
+
+		methods = pd.Series([
+			'setup'
+		])
+		
+		# combine parent and app methods
+		self.appMethods = methods
+		
+	## END INIT method ----------------------
+
+	
+	def setup(self):
+		print('setup()')
+
+		messagePrompt = f'Enter filter (2022-XX): '
+		#value = input(messagePrompt)
+
+		#
+		#
+		filterValue = '2022'
+
+		df = self.tableDf
+		
+		# list all donation transactions
+		# sum donation total
+
+		
+		# df = df.loc[df['Expense'] == "Donation"]
+		
+		# #df = df[df['Transaction Date'].dt.strftime('%Y') == 2022]
+		# print(df)
+
+		# groupDf = df.groupby('Expense')['Amount'].sum()
+		# print(groupDf)
+
+		
+		args = {
+			'df': self.tableDf,
+			'operations': {
+				'filterBy': {
+					'column':'Expense',
+					'value':'Donation'
+				},
+				#'print':'default', # all, default, []
+				'sum': {
+					'groupColumn':'Expense',
+					'targetColumn':'Amount'
+				}
+			}
+		}
+		
+
+		df = self.core.execAppFeatureOperations(args)
+		print(df)
+
+	## END method ----------------------
+
+		
+## END Donations Class ======
+		
 
 
 class Finances(Application):
@@ -105,7 +217,8 @@ class Finances(Application):
 			'creditImportMacroAmazon',
 			'creditImportMacroSapphire',
 			'mechanicsImportMacro',
-			'NAsnippet'
+			'snippet',
+			'PRIVATEperformImport'
 		])
 		#print(self.appMethods)
 
@@ -375,7 +488,38 @@ class Finances(Application):
 	def creditImportMacroAmazon(self):
 		print('creditImportMacroAmazon()')
 
+		
 		testFilename = 'Chase3439.CSV'
+
+
+		# app feature operations
+		args = {
+			'filename': testFilename,
+			'operations': {
+				'readfile': {
+					'location':'imports',
+					'type':'csv'
+				},
+				'getAppAttr':'importDf',
+				'dropColumn':'Memo',
+				'renameColumn': {
+					'name':'Type',
+					'new':'Kind'
+				},
+				'addColumn':{'column':'Imported','value':''},
+				'addColumn':{'column':'Account','value':''},
+				'addColumn':{'column':'Reviewed','value':''},
+				'addColumn':{'column':'Expense','value':''},
+				'setAppAttr':{'attr':'importDf','value':''},
+				'component':{'name':'backUpTable','table':'transactions'}
+			}
+		}
+		
+
+		#self.execAppFeatureOperations(args)
+
+
+		# OPERATION - readfile
 		extension = testFilename.split(".")
 		print(extension)
 
@@ -385,16 +529,18 @@ class Finances(Application):
 		# load by extension type
 		self.importDf = pd.read_csv(location)
 
-		# import file
+		# OPERATION - getAppAttr
 		df = self.importDf
 
-		# drop memo
+		# OPERATION - dropColumn
 		print('drop')
 		df.drop('Memo', axis=1, inplace=True)
 		
+		# OPERATION - renameColumn
 		print('rename')
 		df.rename(columns={'Type': 'Kind'}, inplace=True)
 
+		# OPERATION - addColumn
 		# add reviewed with default false
 		print('add')
 		df['Imported'] = date.today().strftime("%m/%d/%Y")
@@ -405,16 +551,12 @@ class Finances(Application):
 		print(df)
 		print(df.info())
 
+		# OPERATION - setAppAttr
 		self.importDf = df
 
-		# call backup component
-		component = {
-			'name':'backupTable',
-			'table':'transaction'
-		}
-		print(component['name'])
-		print(component['table'])
-		#getattr(core, component['name'], lambda: core.default)()
+		# OPERATION - component: backupTable
+		compArgs = {'table':'transactions'}
+		self.core.backupTable(compArgs)
 
 		# trigger import
 		self.performImport()
@@ -539,6 +681,32 @@ class Finances(Application):
 
 	def snippet(self):
 		print('snippet()')
+		
+		args = {
+			'operations': {
+				'component':{'name':'backupTable','table':'transactions'}
+			}
+		}
+
+		self.execAppFeatureOperations(args)
+
+
+	## END method ----------------------
+
+		
+	def execAppFeatureOperations(self,args):
+		print('execAppFeatureOperations()')
+
+		print(args)
+		print(json.dumps(args, indent=2))
+
+		# loop by operations
+			# call components & pass args
+
+		compArgs = {'table':'transactions'}
+		
+		#Components = self.core.Components
+		self.core.backupTable(compArgs)
 
 
 	## END method ----------------------
@@ -604,6 +772,11 @@ class Finances(Application):
 		print(self.tableHeaderDf)
 		
 		print(self.tableDf)
+
+		
+		# --- format headers
+		self.core.tableDf = self.tableDf
+		self.core.tableHeaderDf = self.tableHeaderDf
 
 		# --- create tables
 		print(self.core.selectedDatasetIndex)
@@ -791,3 +964,6 @@ class Taxes(Application):
 		
 		
 ## END Taxes Class ======
+
+
+

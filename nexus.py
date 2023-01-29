@@ -2,7 +2,10 @@ import pandas as pd
 import re
 import Nex
 from tabulate import tabulate # printing tables
+import json
 
+
+from applications import Donations
 from applications import Finances
 from applications import Taxes
 
@@ -342,6 +345,7 @@ class Core:
 		print('__init__Core()')
 
 		self.UI = UI
+		self.Components = Components
 
 		self.datasetsMethods = pd.Series([
 			'runSnippet',
@@ -358,14 +362,14 @@ class Core:
 
 		self.tableMethods = pd.Series([
 			#'printHeaders',
-		 	#'printTable',
+		 	'printTable',
 			#'addTableColumn',
 			#'renameColumn',
 			#'dropTableColumn',
 			'selectRecord',
 			#'addTableItem',
 			#'linkTableItem',
-			#'deleteRecord',
+			'deleteRecord',
 			#'backToDatasets'
 		])
 		
@@ -541,7 +545,7 @@ class Core:
 		print('selectDataset()')
 
 		# get index input
-		inputMessagePrompt = f'Select Dataset: '
+		inputMessagePrompt = f'Select Index: '
 		indexSelection = int(input(inputMessagePrompt))
 
 		# set state
@@ -563,14 +567,11 @@ class Core:
 
 		UI.displayList = self.tableDf
 		
-
 		UI.promptOptions = self.tableMethods
 
-		
 		# set options state
 		#self.promptOptions = self.tableMethods
 		
-
 	## END method ----------------------
 
 
@@ -588,6 +589,23 @@ class Core:
 	## END method ----------------------
 
 
+	def printTable(self):
+		print('\n|\n|\n|')
+		print('printTable()')
+		
+		df = self.tableDf
+		
+		df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
+		df = df.sort_values(by='Transaction Date', ascending=True)
+
+		headersArray = self.getTableDefaultHeaders()
+		print(headersArray)
+
+		# print report talbe
+		UI = self.UI
+		UI.printFormattedTable(self,df,headersArray)
+
+		## END method ----------------------
 		
 
 
@@ -657,7 +675,7 @@ class Core:
 		# --- show options
 		
 		#print(tabulate(df[headersArray], headersArray, tablefmt='psql'))
-		self.printFormattedTable(df,headersArray)
+		self.UI.printFormattedTable(self,df,headersArray)
 		
 		# --- get input
 		
@@ -674,6 +692,12 @@ class Core:
 		# else:
 		# 	print("The file does not exist")
 
+		
+		# OPERATION - component: backupTable
+		compArgs = {'table':'transactions'}
+		self.backupTable(compArgs)
+
+		
 		# --- drop record
 		
 		# remove from dataset
@@ -701,6 +725,92 @@ class Core:
 	## END method ----------------------
 
 
+	# -------------
+	# components
+	# -------------
+
+			
+	def execAppFeatureOperations(self,args):
+		print('execAppFeatureOperations()')
+
+		print(args)
+		print(json.dumps(args['operations'], indent=4))
+
+		df = args['df']
+
+		operations = args['operations']
+		
+		# loop by operations
+			# call components & pass args
+		for method, args in operations.items():
+			print(method)
+			print(json.dumps(args, indent=4))
+
+			df = getattr(self, method, lambda: self.default)(df,args)
+			
+		return df
+		#compArgs = {'table':'transactions'}
+		
+		#Components = self.core.Components
+		#self.core.backupTable(compArgs)
+
+
+	## END method ----------------------
+
+	def filterBy(self,df,args):	
+		print(f'filterBy()')
+		
+		print(json.dumps(args, indent=2))
+
+		df = df.loc[df[args['column']] == args['value']]
+
+		return df
+		
+		
+	## END method ----------------------
+		
+	def sum(self,df,args):	
+		print(f'sum()')
+		
+		print(json.dumps(args, indent=2))
+
+		groupDf = df.groupby(args['groupColumn'])[args['targetColumn']].sum()
+		print(groupDf)
+		
+		return df
+		
+	## END method ----------------------
+		
+		
+	def backupTable(self,args):	
+		print(f'backupTable()')
+		
+		print(args)
+		print(json.dumps(args, indent=2))
+		
+		tableName = args['table']
+		print(tableName)
+
+		# call save df to file in backups
+		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
+		#self.selectedDatasetIndex = index[0]
+
+		filename = self.datasetsDf.loc[index[0], 'source']
+		location = f'backups/{filename}'
+		print(location)
+		
+		# write new df to file
+		#self.writeTableDftoFile(filename,self.tableDf,self.tableHeaderDf)
+		
+		with pd.ExcelWriter(location) as writer:
+			self.tableDf.set_index('ID').to_excel(writer, sheet_name='data')
+			self.tableHeaderDf.set_index('name').to_excel(writer, sheet_name='headers')
+		
+	## END method ----------------------
+
+
+
+
 		
 ## END Core Class ======
 
@@ -722,7 +832,7 @@ class Apps:
 		
 		self.appsList = pd.Series([
 			'stocks',
-			#'donations', 
+			'Donations', 
 			#'bodyFat',
 			'Finances',
 			'Taxes'
@@ -825,6 +935,31 @@ class Apps:
 
 
 
+
+
+class Components:
+
+	def __init__(self):
+		print('__init__Components()')
+
+
+	## END init method ----------------------
+
+	def backupTable(self,args):	
+		print(f'backupTable()')
+		
+		print(args)
+		print(json.dumps(args, indent=2))
+		
+		print(self)
+		print(json.dumps(self, indent=2))
+
+		
+		
+	## END method ----------------------
+
+		
+## END Components Class ======
 
 
 
