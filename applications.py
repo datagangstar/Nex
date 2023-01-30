@@ -841,47 +841,39 @@ class Taxes(Application):
 	def __init__(self,core):
 		print('__init__Taxes()')
 
+		self.core = core
+		
+		# init app parent
+		super().__init__()
+		
+
+		filename,df,headersDf = core.loadTableToDf('transactions')
+		
+		self.filename = filename
+		self.tableDf = super().formatTable(df,headersDf)
+		self.tableHeaderDf = headersDf
+
 		self.appMethods = pd.Series([
+			'setup',
 			'setYear',
 			'viewIncome',
 			'totalIncome',
 		])
 		
-		# init Core
-		#core = Core()
 		
-		# --- check table
-		tableName = 'transactions'
-		print(tableName)
-		filename,df,headersDf = core.loadTableToDf(tableName)
-		print(df.head())
-		print(filename)
-
-
-		# create dataset if needed
-
-		
-		# init Apps
-		#apps = Apps()
-		
-		#UI.displayList = self.methods
-		#UI.promptOptions = self.methods
-		#ui = UI()
-		#UI.buildOptionsList(self.methods)
-
-		optionsList = self.appMethods
-		# show options
-		for idx, x in optionsList.items():
-			print(f'{idx}: {x}')
+		# optionsList = self.appMethods
+		# # show options
+		# for idx, x in optionsList.items():
+		# 	print(f'{idx}: {x}')
 			
-		# get user method select
-		messagePrompt = f'select function: '
-		listIndex = int(input(messagePrompt))
+		# # get user method select
+		# messagePrompt = f'select function: '
+		# listIndex = int(input(messagePrompt))
 		
-		objAttribute = optionsList.get(listIndex, '')
-		print(objAttribute)
+		# objAttribute = optionsList.get(listIndex, '')
+		# print(objAttribute)
 
-		getattr(self, objAttribute)(df)
+		# getattr(self, objAttribute)(df)
 
 		# settings
 		# - dashboard report 
@@ -889,6 +881,8 @@ class Taxes(Application):
 		# - methods list
 		# - 
 		
+		
+
 		
 	## END INIT method ----------------------
 
@@ -911,6 +905,52 @@ class Taxes(Application):
 	## END method ----------------------
 
 		
+	def setup(self):
+		print('setup()')
+
+		messagePrompt = f'Enter filter (2022-XX): '
+		#value = input(messagePrompt)
+
+		#
+		#
+		filterValue = '2022'
+
+		df = self.tableDf
+
+
+		# ---
+		# make form and line object
+		# get income metric value
+		# assign to class variable by form & line
+			# 
+		# template spreadsheet
+			# form, line, name, value, value type, calc or reference, description
+			# value type: reference, metric
+		# product report file 
+
+
+		
+		args = {
+			'df': self.tableDf,
+			'operations': {
+				'filterBy': {
+					'column':'Expense',
+					'value':'Donation'
+				},
+				#'print':'default', # all, default, []
+				'sum': {
+					'groupColumn':'Expense',
+					'targetColumn':'Amount'
+				}
+			}
+		}
+		
+		
+
+		df = self.core.execAppFeatureOperations(args)
+		print(df)
+
+	## END method ----------------------
 		
 		
 	def setYear(self):

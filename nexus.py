@@ -3,6 +3,9 @@ import re
 import Nex
 from tabulate import tabulate # printing tables
 import json
+import uuid
+from datetime import date
+import os
 
 
 from applications import Donations
@@ -26,6 +29,7 @@ class UI:
 			'Datasets',
 			'Market', 
 			'Applications',
+			'Metrics',
 			'Components',
 			'Mods',
 			'Settings'
@@ -61,6 +65,8 @@ class UI:
 		# init Apps
 		apps = Apps()
 		
+		# init Apps
+		metrics = Metrics()
 
 		while True:
 		
@@ -112,14 +118,22 @@ class UI:
 							self.promptOptions = apps.getAppMethods()
 							
 						elif optionNumber == 3:
+							print('--- Metrics')
+							# get datasets list options
+							self.displayList = metrics.getAppsList()
+							
+							# get datasets list options
+							self.promptOptions = metrics.getAppMethods()
+							
+						elif optionNumber == 4:
 							print('--- Components')
 							# get datasets list options
 							
-						elif optionNumber == 4:
+						elif optionNumber == 5:
 							print('--- Mods')
 							# get datasets list options
 							
-						elif optionNumber == 5:
+						elif optionNumber == 6:
 							print('--- Settings')
 							# get datasets list options
 							
@@ -165,6 +179,11 @@ class UI:
 
 								# send selected method
 								
+						elif self.menuSelection == 'Metrics':
+							print('--- Metrics')
+							
+							# get datasets list options
+							getattr(metrics, objAttribute, lambda: metrics.default)(core)
 							
 						elif self.menuSelection == 'Components':
 							print('--- Components')
@@ -349,8 +368,8 @@ class Core:
 
 		self.datasetsMethods = pd.Series([
 			'runSnippet',
-			'selectDataset'
-			#'createDataset',
+			'selectDataset',
+			'createDataset',
 			#'deleteDataset',
 			#'runStocksApp',
 			#'runDonationApp',
@@ -367,7 +386,7 @@ class Core:
 			#'renameColumn',
 			#'dropTableColumn',
 			'selectRecord',
-			#'addTableItem',
+			'addTableItem',
 			#'linkTableItem',
 			'deleteRecord',
 			#'backToDatasets'
@@ -575,7 +594,124 @@ class Core:
 	## END method ----------------------
 
 
+	def createDataset(self):
+		print('\n')
+		print('createDataset()')
+		print('---------')
 
+		# --- get input
+		
+		# todo - check if "name" already exists
+		messagePrompt = f'Name Dataset: '
+		resDict = UI.processUserInput(self,messagePrompt)
+		
+		# --- build table
+		
+		if resDict['valid']:
+			
+			# extract value
+			value = str(resDict['value'])
+			
+			# build filename
+			filename = f'{value}.xlsx'
+
+			# todo - value to lowercase, replace spaces with _
+			rowDict = {
+			 "ID": uuid.uuid4(),
+			 "created": date.today().strftime("%m/%d/%Y"),
+			 "name": value,
+			 "source": filename,
+			 "status": 'active'
+			}
+
+			# add row to datasets
+			self.datasetsDf = self.datasetsDf.append(rowDict, ignore_index=True)
+			print(self.datasetsDf)
+
+			# build dataset table
+			# headDict = pd.Series(['ID','created','modified','name'])
+			dataDf = pd.DataFrame({
+			 'ID': pd.Series(dtype='object'),
+			 'created': pd.Series(dtype='datetime64[ns]'),
+			 'modified': pd.Series(dtype='datetime64[ns]')
+			})
+
+			# get new df headers
+			headers = dataDf.columns
+			print(headers)
+
+			# set dtype of each header
+			# todo - set dtype based on assignment
+			headersDf = pd.DataFrame({
+			 'name': pd.Series(dtype='str'),
+			 'dtype': pd.Series(dtype='str'),
+			 'alias': pd.Series(dtype='str'),
+			 'editable': pd.Series(dtype='str'),
+			 'required': pd.Series(dtype='str'),
+			 'default_view': pd.Series(dtype='str')
+			})
+
+			# set header edit column
+			for idx, x in enumerate(headers):
+
+				if x == 'ID':
+					dtypeValue = 'object'
+				else:
+					dtypeValue = 'datetime64'
+
+				headerRowDict = {
+				 'name': x,
+				 'dtype': dtypeValue,
+				 'alias': x,
+				 'editable': 'False',
+				 'required': 'False',
+				 'default_view': 'False'
+				}
+
+				#headersDf = pd.concat([headersDf, headerRowDict], ignore_index=True)
+				headersDf = headersDf.append(headerRowDict, ignore_index=True)
+
+		# --- write table
+			print(headersDf)
+
+			# write new df to file
+			self.writeTableDftoFile(filename,dataDf,headersDf)
+
+		# --- update datasets
+			
+			# update datesets file
+			self.writeDatasetsDftoFile()
+
+		## END method ----------------------
+
+	def writeDatasetsDftoFile(self):
+		print('\n')
+		print('writeDatasetsDftoFile()')
+		print('---------')
+
+		df = self.datasetsDf
+
+		df["created"] = pd.to_datetime(df["created"])
+		df["modified"] = pd.to_datetime(df["modified"])
+		
+		df = self.datasetsDf.astype({
+			'ID':'string',
+			'created':'string',
+			'modified':'string',
+			'name':'string',
+			'source':'string',
+			'status':'string'
+		})
+		
+		# safe dataset.xlsx
+		with pd.ExcelWriter('datasets.xlsx') as writer:
+			df.set_index('ID').to_excel(writer, sheet_name='data')
+
+		df.to_json(r'datasets.json')
+
+	## END method ----------------------
+
+	
 	def dropColumns(self,df,dropList):
 		print('dropColumns()')
 
@@ -595,8 +731,8 @@ class Core:
 		
 		df = self.tableDf
 		
-		df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
-		df = df.sort_values(by='Transaction Date', ascending=True)
+		# df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
+		# df = df.sort_values(by='Transaction Date', ascending=True)
 
 		headersArray = self.getTableDefaultHeaders()
 		print(headersArray)
@@ -605,7 +741,7 @@ class Core:
 		UI = self.UI
 		UI.printFormattedTable(self,df,headersArray)
 
-		## END method ----------------------
+	## END method ----------------------
 		
 
 
@@ -614,6 +750,85 @@ class Core:
 	# -------------
 
 
+
+	def addTableItem(self):
+		print('addTableItem()')
+		
+		print(self.tableDf)
+		
+		# build filename
+		filename = self.datasetsDf.loc[self.selectedDatasetIndex, 'source']
+		
+		# get input
+		df = self.createTableRow(self.tableDf,self.tableHeaderDf)
+
+		# --- write new df to file
+		self.writeTableDftoFile(filename,df,self.tableHeaderDf)
+		
+	## END method ----------------------
+
+
+	def createTableRow(self,df,headersDf):
+		print('createTableRow(df)')
+
+		# get editable headers
+		# loop through headers
+		# get input by header type
+		# build row dictionary
+		# concat row into df
+		# return df
+
+		# --- get editable headers
+		#self.printFormattedTable(df,self.getTableDefaultHeaders())
+		
+		# --- create default row cells
+		rowDict = {
+		 "ID": uuid.uuid4(),
+		 "created": date.today().strftime("%m/%d/%Y"),
+		 "modified": ""
+		}
+		
+		for index, row in headersDf.iterrows():
+			#print(f'{index}: {row["editable"]}')
+
+			columnName = row["name"]
+			
+			if row["required"]:
+				#print('get input')
+				messagePrompt = f'Select "{row["name"]}":'
+				inputValue = ''
+				if row["dtype"] == 'str':
+					#print('get str')
+					inputValue = input(messagePrompt)
+					print(f'------')
+				elif row["dtype"] == 'int64':
+					#print('get int')
+					inputValue = int(input(messagePrompt))
+					print(f'------')
+				elif row["dtype"] == 'float64':
+					#print('get float')
+					inputValue = pd.to_numeric(input(messagePrompt))
+					print(f'------')
+				else:
+					print('unknown type')
+
+				rowDict[columnName] = inputValue
+
+		print(rowDict)
+		
+		rowDf = pd.DataFrame(rowDict, index=[0])
+		df = pd.concat([df, rowDf], ignore_index=True)
+		
+		# --- print df by defaults
+		UI.printFormattedTable(self,df,self.getTableDefaultHeaders())
+		
+		return df
+
+	## END method ----------------------
+	
+
+	
+	
 		
 	def readRecord(self):
 
@@ -641,7 +856,6 @@ class Core:
 		self.selectedRecordIndex = indexSelection
 
 		# --- loop fields
-		
 		for index, row in self.tableHeaderDf.iterrows():
 			print(f'{row["name"]}: {self.tableDf.loc[indexSelection, row["name"]]}')
 			#print(f'{row}: {self.tableDf.loc[indexSelection, row["name"]]}')
@@ -736,7 +950,14 @@ class Core:
 		print(args)
 		print(json.dumps(args['operations'], indent=4))
 
-		df = args['df']
+		df = pd.DataFrame()
+		try:
+			args["df"]
+			print('The key exists in the dictionary')
+			df = args['df']
+		except KeyError as error:
+			print("The key doesn't exist in the dictionary")
+			
 
 		operations = args['operations']
 		
@@ -757,6 +978,27 @@ class Core:
 
 	## END method ----------------------
 
+	def retTable(self,df,args):	
+		print(f'retTable()')
+		
+		print(json.dumps(args, indent=2))
+
+		tableName = args['name']
+		
+		# build filename
+		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
+
+		filename = self.datasetsDf.loc[index[0], 'source']
+		location = f'datasets/{filename}'
+		print(location)
+		
+		# read to dataframe using helper functions
+		df = pd.DataFrame(self.readDataToDf(location))
+
+		return df
+		
+	## END method ----------------------
+		
 	def filterBy(self,df,args):	
 		print(f'filterBy()')
 		
@@ -766,7 +1008,6 @@ class Core:
 
 		return df
 		
-		
 	## END method ----------------------
 		
 	def sum(self,df,args):	
@@ -775,9 +1016,15 @@ class Core:
 		print(json.dumps(args, indent=2))
 
 		groupDf = df.groupby(args['groupColumn'])[args['targetColumn']].sum()
-		print(groupDf)
+		print(groupDf.head())
+
+		#df[df['A'] == 'foo']
+		value = groupDf[0]
+
+		#value = df.loc[groupDf.groups[args['groupColumn']]]
+		print(value)
 		
-		return df
+		return value
 		
 	## END method ----------------------
 		
@@ -934,6 +1181,139 @@ class Apps:
 ## END Apps Class ======
 
 
+class Metrics:
+
+	def __init__(self):
+		print('__init__Metrics()')
+
+		self.core = type('', (), {})()
+
+		self.appsList = pd.Series([
+			'Donations', 
+			'Taxes'
+		])
+		
+		self.appMethods = pd.Series([
+			'runSnippet',
+			'select'
+			#'create',
+			#'delete'
+		])
+
+		self.metricsDict = {
+			'Donations':{
+				'total2022':{
+					'operations': {
+						'retTable': {
+							'name':'transactions'
+						},
+						'filterBy': {
+							'column':'Expense',
+							'value':'Donation'
+						},
+						'sum': {
+							'groupColumn':'Expense',
+							'targetColumn':'Amount'
+						}
+					}
+				}
+			},
+			'Taxes':{
+				'income2022':{
+					'operations': {
+						'filterBy': {
+							'column':'Expense',
+							'value':'Donation'
+						},
+						'sum': {
+							'groupColumn':'Expense',
+							'targetColumn':'Amount'
+						}
+					}
+				},
+				'income2023':{
+					'operations': {
+						'filterBy': {
+							'column':'Expense',
+							'value':'Donation'
+						},
+						'sum': {
+							'groupColumn':'Expense',
+							'targetColumn':'Amount'
+						}
+					}
+				}
+			}
+		}
+
+		
+		self.promptOptions = self.appMethods
+
+	## END method ----------------------
+
+		
+	# ------ getters & setters
+
+	# called externally
+	def getAppsList(self):
+		self.promptOptions = self.appMethods
+		return self.appsList
+
+	## END method ----------------------
+		
+	# called externally
+	def getAppMethods(self):
+		return self.appMethods
+		
+	## END method ----------------------
+		
+	def runSnippet(self,core):	
+		print(f'runSnippet()')
+		self.core = core
+		metricValue = self.returnMetric('Donations','total2022')
+		print(f'metric: {metricValue}')
+		
+	## END method ----------------------
+
+	
+	def select(self,core):
+		print(f'select()')
+
+		# get user input on app from menu list
+		"""Code Summary
+			get user input
+   			init app class 
+	  		transfer UI control to app class
+		"""
+		
+		# select index
+		messagePrompt = f'select metric from list: '
+		listIndex = int(input(messagePrompt))
+
+		
+		metricStr = self.appsList.get(listIndex, '')
+		print(f'metricStr: {metricStr}')
+
+		#print(self.metricsDict[metricStr])
+
+
+		print(json.dumps(self.metricsDict[metricStr], indent=2))
+
+		
+	## END method ----------------------
+
+	def returnMetric(self,app,name):
+		print(f'returnMetric({app},{name})')
+
+		print(json.dumps(self.metricsDict[app], indent=2))
+		
+		retValue = self.core.execAppFeatureOperations(self.metricsDict[app][name])
+		return retValue
+		
+	## END method ----------------------
+
+
+## END Metrics Class ======
 
 
 
@@ -953,8 +1333,6 @@ class Components:
 		
 		print(self)
 		print(json.dumps(self, indent=2))
-
-		
 		
 	## END method ----------------------
 
