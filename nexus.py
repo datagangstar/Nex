@@ -762,6 +762,8 @@ class Core:
 		# get input
 		df = self.createTableRow(self.tableDf,self.tableHeaderDf)
 
+		self.tableDf = df
+		
 		# --- write new df to file
 		self.writeTableDftoFile(filename,df,self.tableHeaderDf)
 		
