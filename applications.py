@@ -847,7 +847,7 @@ class Taxes(Application):
 		super().__init__()
 		
 
-		filename,df,headersDf = core.loadTableToDf('transactions')
+		filename,df,headersDf = core.loadTableToDf('taxes2022')
 		
 		self.filename = filename
 		self.tableDf = super().formatTable(df,headersDf)
@@ -855,8 +855,9 @@ class Taxes(Application):
 
 		self.appMethods = pd.Series([
 			'setup',
-			'setYear',
-			'viewIncome',
+			'selectYear',
+			'viewTable',
+			'viewReport',
 			'totalIncome',
 		])
 		
@@ -953,13 +954,32 @@ class Taxes(Application):
 	## END method ----------------------
 		
 		
-	def setYear(self):
-		print(f'setYear()')
+	def selectYear(self):
+		print(f'selectYear()')
+
+		# pick year & get dataframe by 'taxes'{year}'.xlsx'
+		
 
 	## END method ----------------------
 		
-	def viewIncome(self):
-		print('viewIncome()')
+	def viewTable(self):
+		print('viewTable()')
+		
+		df = self.tableDf
+		
+		UI = self.core.UI
+		UI.printFormattedTable(self,df,self.core.getTableDefaultHeaders())
+
+	## END method ----------------------
+		
+	def viewReport(self):
+		print('viewReport()')
+
+		# loop through df and get each value by value type
+
+		# test REF, calc, report
+
+		
 
 	## END method ----------------------
 		
