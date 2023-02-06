@@ -223,7 +223,8 @@ class Finances(Application):
 		#print(self.appMethods)
 
 		# combine parent and app methods
-		self.appMethods = pd.concat([methods, super().getMethods()], axis=0)
+		self.appMethods = methods
+		#self.appMethods = pd.concat([methods, super().getMethods()], axis=0)
 		#print(self.appMethods)
 
 		#self.appMethods = methods

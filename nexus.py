@@ -464,6 +464,8 @@ class Core:
 
 		colName = row['name']
 		dtype = row['dtype']
+		print(colName)
+		print(f'dtype: {dtype}')
 
 		# if 
 		if dtype == 'datetime64':
@@ -472,7 +474,7 @@ class Core:
 		elif  dtype == 'str':
 			#print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
-			df[colName] = df[colName].astype(str)
+			df[colName] = df[colName].astype('string')
 		elif  dtype == 'int':
 			#print('format to int')
 			df[colName] = df[colName].astype('int')
