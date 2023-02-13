@@ -4,6 +4,8 @@ import uuid
 from datetime import date
 from tabulate import tabulate # printing tables
 import json
+import numpy as np
+
 
 # get list of class methods
 # https://www.askpython.com/python/examples/find-all-methods-of-class#:~:text=To%20list%20the%20methods%20for%20this%20class%2C%20one%20approach%20is,and%20properties%20of%20the%20class.
@@ -214,6 +216,7 @@ class Finances(Application):
 			'viewTrans', 
 			'reviewItem', 
 			'filterDateRange',
+			'checkBudget',
 			'creditImportMacroAmazon',
 			'creditImportMacroSapphire',
 			'mechanicsImportMacro',
@@ -460,7 +463,7 @@ class Finances(Application):
 		# set as reviewed
 		df.loc[recordIndex, 'Expense'] = newValue
 		df.loc[recordIndex, 'modified'] = date.today().strftime("%m/%d/%Y")
-		df.loc[recordIndex, 'Reviewed'] = True
+		df.loc[recordIndex, 'Reviewed'] = 1
 		print(df.loc[recordIndex])
 
 		# write new df to file
@@ -486,6 +489,94 @@ class Finances(Application):
 
 	## END method ----------------------
 
+
+
+	
+	def checkBudget(self):
+		print('checkBudget()')
+		
+		# --- STEP
+		
+		df = self.tableDf
+
+		filterDate = '2023-02'
+		
+		# --- STEP
+		
+		df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+		df = df.loc[df['Reviewed'] == 1]
+		
+		# --- STEP
+		
+		headersArray = self.core.getTableDefaultHeaders()
+		print(headersArray)
+
+		# print report talbe
+		UI = self.core.UI
+		UI.printFormattedTable(self,df,headersArray)
+
+		
+		# --- STEP
+		
+		budgetDict = {
+			'Eating Out':200,
+			'Entertainment':100,
+			'Parking':0,
+			'Coffee':150,
+			'Yoga':128,
+			'Utilities':30,
+			'Gasoline':150,
+			'Groceries':350,
+			'Laundry':20,
+			'Services':30,
+			'Haircut':55,
+			'Home':50,
+			'Supplies':30,
+			'Utilities':30,
+			'Housing':1630
+		}
+		print(json.dumps(budgetDict, indent=2))
+
+		budgetDf = pd.DataFrame(budgetDict.items())
+		budgetDf = budgetDf.set_index(0)
+		print(budgetDf)
+
+		
+		# --- STEP
+
+		
+		#set type to float
+		#df['Amount'] = pd.to_numeric(df['Amount'])
+		
+		groupDf = df.groupby('Expense')['Amount'].sum()
+		groupDf.to_frame()
+		print(groupDf)
+			
+		total = df['Amount'].sum()
+		print(f'Total: {total}')
+
+		
+		# --- STEP
+		df3 = pd.merge(budgetDf, groupDf, left_index=True, right_index=True)
+
+		df3 = df3.rename(columns={df3.columns[0]: 'budget'})
+		
+		#print(df3)
+		
+		# --- STEP
+		df3 = df3.assign(remaining=lambda x: x.budget + x.Amount)
+		
+		# --- STEP
+		
+		#budgetDf.join(groupDf)
+		print(df3)
+		
+
+	## END method ----------------------
+
+
+
+	
 	def creditImportMacroAmazon(self):
 		print('creditImportMacroAmazon()')
 
@@ -802,21 +893,33 @@ class Finances(Application):
 		df = self.tableDf
 
 		colName = row['name']
+		print(colName)
 		dtype = row['dtype']
+
+		df = df.replace(np.nan, '')
+		df = df.replace('<NA>', '')
 
 		# if 
 		if dtype == 'datetime64':
-			#print('format to datetime')
+			print('format to datetime')
 			df[colName] = pd.to_datetime(df[colName])
 		elif  dtype == 'str':
-			#print('format to str')
+			print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
 			df[colName] = df[colName].astype(str)
 		elif  dtype == 'int':
-			#print('format to int')
-			df[colName] = df[colName].astype('int')
+			print('format to int')
+			df[colName] = df[colName].astype(str)
+			df[colName] = df[colName].replace('','0')
+			df[colName] = df[colName].replace('True', '1')
+			df[colName] = df[colName].replace('False', '0')
+
+			#df[colName] = df[colName].astype(str).astype(int)
+
+			#df[colName] = pd.to_numeric(df[colName])
+			df[colName] = df[colName].astype(int)
 		elif  dtype == 'number':
-			#print('format to str')
+			print('format to number')
 			#df[colName] = pd.to_datetime(df[colName])
 			#df[colName] = df[colName].astype(str)
 			df[colName] = pd.to_numeric(df[colName])

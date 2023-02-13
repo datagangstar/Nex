@@ -6,6 +6,7 @@ import json
 import uuid
 from datetime import date
 import os
+import numpy as np
 
 
 from applications import Donations
@@ -455,7 +456,7 @@ class Core:
 	
 	def formatTableColumn(self,row):
 		#print('\n')
-		#print('formatTableColumn()')
+		print('formatTableColumn()')
 		#print(row.dtypes)
 		#print(row['name'])
 		#print(row['dtype'])
@@ -463,23 +464,33 @@ class Core:
 		df = self.tableDf
 
 		colName = row['name']
-		dtype = row['dtype']
 		print(colName)
-		print(f'dtype: {dtype}')
+		dtype = row['dtype']
+
+		df = df.replace(np.nan, '')
+		df = df.replace('<NA>', '')
 
 		# if 
 		if dtype == 'datetime64':
-			#print('format to datetime')
+			print('format to datetime')
 			df[colName] = pd.to_datetime(df[colName])
 		elif  dtype == 'str':
-			#print('format to str')
+			print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
-			df[colName] = df[colName].astype('string')
+			df[colName] = df[colName].astype(str)
 		elif  dtype == 'int':
-			#print('format to int')
-			df[colName] = df[colName].astype('int')
+			print('format to int')
+			df[colName] = df[colName].astype(str)
+			df[colName] = df[colName].replace('','0')
+			df[colName] = df[colName].replace('True', '1')
+			df[colName] = df[colName].replace('False', '0')
+
+			#df[colName] = df[colName].astype(str).astype(int)
+
+			#df[colName] = pd.to_numeric(df[colName])
+			df[colName] = df[colName].astype(int)
 		elif  dtype == 'number':
-			#print('format to str')
+			print('format to number')
 			#df[colName] = pd.to_datetime(df[colName])
 			#df[colName] = df[colName].astype(str)
 			df[colName] = pd.to_numeric(df[colName])
@@ -525,6 +536,7 @@ class Core:
 	## END method ----------------------
 			
 	def getTableDefaultHeaders(self):
+		print('getTableDefaultHeaders()')
 		headerArray = []
 		for index, row in self.tableHeaderDf.iterrows():
 			if row["default_view"]:
@@ -537,6 +549,7 @@ class Core:
 		
 	# called in createDataset
 	def writeTableDftoFile(self, filename, tableDf, tableHeaderDf):
+		print('writeTableDftoFile()')
 		
 		# safe dataset
 		tableDf = tableDf.set_index('ID')
