@@ -168,6 +168,8 @@ class Finances(Application):
 	def __init__(self,core):
 		print('__init__Finances()')
 
+		self.appName = 'finances'
+
 		self.core = core
 
 		# init app parent
@@ -231,17 +233,19 @@ class Finances(Application):
 		#print(self.appMethods)
 
 		#self.appMethods = methods
-
 		#self.appMethods()
 		
-		self.settingsDict = {}
+		#self.settingsDict = {}
+		self.settingsDict = self.core.readDictFromFile(self.appName)
+		# obj = self.readDictFromFile(name)
+
 
 		if len(self.settingsDict) == 0:
 
 			monthTimeDate = date.today().strftime("%Y-%m")
 			print(f'Default Filter Month: {monthTimeDate}')
-		
-			settingsDict = self.settingsDict
+			
+			#settingsDict = self.settingsDict
 			setting = {"dateFilter": ''}
 			settings = {"settings": setting}
 			settingsDict['transactions'] = settings
@@ -344,7 +348,8 @@ class Finances(Application):
 		df = df.sort_values(by='Transaction Date', ascending=True)
 
 		# filter by selected MONTH
-		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		settingsDict = self.core.readDictFromFile(self.appName)
+		filterDate = settingsDict['settings']['dateFilter']
 		#print(bool(filterDate))
 		
 		if bool(filterDate):
@@ -473,18 +478,52 @@ class Finances(Application):
 
 	def filterDateRange(self):
 		print('filterDateRange()')
-		
-		print('--- filterDateRange')
 
-		settingsDict = self.settingsDict
-		print(settingsDict)
 		
-		messagePrompt = f'Enter filter (2022-XX): '
-		value = input(messagePrompt)
+
+		# app feature operations
 		
-		settingsDict['transactions']['settings']['dateFilter'] = value
-		print(settingsDict)
-		self.settingsDict = settingsDict
+		args = {
+			
+			'operations': {
+				'getSettingsDict': {
+					'appName':self.appName
+				},
+				'getUserInput': {
+					'message':'Enter filter (2022-XX): '
+				},
+				'saveSetting': {
+					'settingName':'dateFilter'
+				}
+			}
+		}
+		
+		
+
+		data = self.core.execAppFeatureOperations(args)
+		print(data)
+		
+
+		
+		# # --- STEP
+		# settingsDict = self.core.readDictFromFile(self.appName)
+
+		# #settingsDict = self.settingsDict
+		# print(settingsDict)
+		
+		# --- STEP
+		
+		# messagePrompt = f'Enter filter (2022-XX): '
+		# value = input(messagePrompt)
+		
+		# # --- STEP
+		# settingsDict['settings']['dateFilter'] = value
+		# print(settingsDict)
+		# self.core.writeDictToFile(self.appName,settingsDict)
+		
+		# # --- STEP
+		# self.settingsDict = settingsDict
+
 
 
 	## END method ----------------------

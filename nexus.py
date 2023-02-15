@@ -534,6 +534,36 @@ class Core:
 		return filename,self.tableDf,self.tableHeaderDf
 		
 	## END method ----------------------
+
+		
+	def writeDictToFile(self,name,data):
+
+		# self.writeDictToFile(name,obj)
+	
+		path = f'settings/{name}.json'
+	
+		# Serialize data into file:
+		json.dump( data, open( path, 'w' ) )
+
+	## END method ----------------------
+
+	def readDictFromFile(self,name):
+
+		# obj = self.readDictFromFile(name)
+	
+		path = f'settings/{name}.json'
+		
+		# Read data from file:
+		try: 
+			with open( path ) as file:
+				data = json.load(file)
+			return data
+				
+		except FileNotFoundError:
+			print('FileNotFoundError')
+		
+	## END method ----------------------
+		
 			
 	def getTableDefaultHeaders(self):
 		print('getTableDefaultHeaders()')
@@ -977,16 +1007,20 @@ class Core:
 			
 
 		operations = args['operations']
+		passDict = {}
 		
 		# loop by operations
 			# call components & pass args
 		for method, args in operations.items():
 			print(method)
 			print(json.dumps(args, indent=4))
-
-			df = getattr(self, method, lambda: self.default)(df,args)
 			
-		return df
+			returnData = getattr(self, method, lambda: self.default)(df=df,args=args,passDict=passDict)
+
+			#returnData = getattr(self, method, lambda: self.default)(df,args,passValue)
+			passDict = returnData
+			
+		return returnData
 		#compArgs = {'table':'transactions'}
 		
 		#Components = self.core.Components
@@ -1073,7 +1107,92 @@ class Core:
 	## END method ----------------------
 
 
+	def getSettingsDict(self,**kwargs):	
+		print(f'getSettingsDict()')
 
+		# 'getSettingsDict': {
+		# 			'name':self.appName
+		# 		},
+		args = kwargs['args']
+		print(args)
+		print(json.dumps(args, indent=2))
+		
+		passDict = kwargs['passDict']
+		
+		appName = args['appName']
+		print(appName)
+		
+		# --- STEP
+		settingsDict = self.readDictFromFile(appName)
+
+		#settingsDict = self.settingsDict
+		print(settingsDict)
+		returnDict = passDict
+		returnDict['settingsDict'] = settingsDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+		
+	def getUserInput(self,**kwargs):	
+		print(f'getUserInput()')
+
+		# 'getUserInput': {
+		# 			'message':'Enter filter (2022-XX): '
+		
+		args = kwargs['args']
+		print(args)
+		print(json.dumps(args, indent=2))
+		
+		passDict = kwargs['passDict']
+		
+		messagePrompt = args['message']
+		
+		value = input(messagePrompt)
+
+		returnDict = passDict
+		returnDict['value'] = value
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+		
+	def saveSetting(self,**kwargs):	
+		print(f'saveSetting()')
+
+		# 'saveSetting': {
+		# 			'settingName':'dateFilter'
+		# 		}
+		
+		args = kwargs['args']
+		print(args)
+		print(json.dumps(args, indent=2))
+		
+		passDict = kwargs['passDict']
+
+		settingsDict = passDict['settingsDict']
+		passValue = passDict['value']
+		print(passDict['value'])
+		
+		
+		settingName = args['settingName']
+		
+		settingsDict['settings'][settingName] = passValue
+		print(settingsDict)
+		#self.core.writeDictToFile(self.appName,settingsDict)
+
+		returnDict = passDict
+		returnDict['settingsDict'] = settingsDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+		
 
 		
 ## END Core Class ======
