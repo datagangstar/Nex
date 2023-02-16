@@ -213,6 +213,7 @@ class Finances(Application):
 		
 		methods = pd.Series([
 			'sumGroup', 
+			'sumRecurring',
 			'NAupdateStatus', 
 			'sumTotal', 
 			'viewTrans', 
@@ -304,11 +305,39 @@ class Finances(Application):
 		print(f'Total: {total}')
 
 	## END method ----------------------
+
+
+		
+	def sumRecurring(self):
+		print(f'sumRecurring()')
+
+		df = self.tableDf
+		
+		# --- STEP - filter
+		df = df[df['Transaction Date'].dt.strftime('%Y-%m') == '2023-01']
+		
+		# --- STEP - filter
+		df = df.loc[df['Recurring'] == 1]
+		
+		# --- STEP - operation
+		net = df['Amount'].sum()
+		print(f'net: {net}')
+
+		# --- STEP - operation
+		groupDf = df.groupby('Description')['Amount'].sum()
+		print(groupDf)
+
+		
+	## END method ----------------------
+
+
 		
 	def updateStatus(self):
 		print('updateStatus()')
 
 	## END method ----------------------
+
+
 		
 	def sumTotal(self):
 		print('sumTotal()')
@@ -347,6 +376,8 @@ class Finances(Application):
 		df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
 		df = df.sort_values(by='Transaction Date', ascending=True)
 
+		# --- STEP
+
 		# filter by selected MONTH
 		settingsDict = self.core.readDictFromFile(self.appName)
 		filterDate = settingsDict['settings']['dateFilter']
@@ -381,8 +412,11 @@ class Finances(Application):
 		df = self.tableDf
 		UI = self.core.UI
 		
+		# --- STEP
+
 		# filter by selected MONTH
-		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		settingsDict = self.core.readDictFromFile(self.appName)
+		filterDate = settingsDict['settings']['dateFilter']
 		#print(bool(filterDate))
 		
 		if bool(filterDate):
@@ -476,6 +510,8 @@ class Finances(Application):
 
 	## END method ----------------------
 
+
+	
 	def filterDateRange(self):
 		print('filterDateRange()')
 
@@ -610,6 +646,9 @@ class Finances(Application):
 		#budgetDf.join(groupDf)
 		print(df3)
 		
+		# --- STEP
+		net = df3['remaining'].sum()
+		print(f'net: {net}')
 
 	## END method ----------------------
 
