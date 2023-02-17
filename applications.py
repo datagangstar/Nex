@@ -23,6 +23,7 @@ class Application:
 	def __init__(self):
 		print('__init__Applications()')
 		
+		
 		self.methods = pd.Series([
 			'back'
 		])
@@ -75,6 +76,18 @@ class Application:
 	## END method ----------------------
 
 
+		
+	def getAppFeature(self,appName):
+		print(f'__getAppFeature({appName})')
+		
+		 
+		return self.core.readDictFromFile({
+			'base': 'applications',
+			'appName': appName,
+			'type': 'features'
+		})
+
+	## END method ----------------------
 		
 ## END Taxes Class ======
 
@@ -185,30 +198,43 @@ class Finances(Application):
 
 		
 		for index, row in headersDf.iterrows():
-			print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
+			#print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
 
 			dtype = row["dtype"]
 			name = row["name"]
 			
 			if dtype == 'datetime64':
-				print('--- datetime64')
+				#print('--- datetime64')
 				df[name]= pd.to_datetime(df[name])
 
 			elif dtype == 'int':
-				print("int")
+				#print("int")
 				df[name] = df[name].astype('int')
 				
 			elif dtype == 'float':
-				print("float")
+				#print("float")
 				df[name] = df[name].astype('float')
 				
 			elif dtype == 'str':
-				print("str")
+				#print("str")
 				df[name] = df[name].astype('str')
 			else:
 				print("object")
 				
-		print(df.info())
+		#print(df.info())
+
+
+		
+		
+		#featureDict = super().getAppFeature(self.appName)
+		args = {
+			'base': 'applications',
+			'appName': self.appName,
+			'type': 'features'
+		}
+		#print(json.dumps(args, indent=2))
+		featureDict = self.core.readDictFromFile(args=args)
+		print(json.dumps(featureDict, indent=2))
 		
 		
 		methods = pd.Series([
@@ -237,7 +263,12 @@ class Finances(Application):
 		#self.appMethods()
 		
 		#self.settingsDict = {}
-		self.settingsDict = self.core.readDictFromFile(self.appName)
+		
+		args = {
+			'appName': self.appName
+		}
+		print(json.dumps(args, indent=2))
+		self.settingsDict = self.core.readDictFromFile(args=args)
 		# obj = self.readDictFromFile(name)
 
 
@@ -379,7 +410,12 @@ class Finances(Application):
 		# --- STEP
 
 		# filter by selected MONTH
-		settingsDict = self.core.readDictFromFile(self.appName)
+		args = {
+			'appName': self.appName
+		}
+		print(json.dumps(args, indent=2))
+		settingsDict = self.core.readDictFromFile(args=args)
+		
 		filterDate = settingsDict['settings']['dateFilter']
 		#print(bool(filterDate))
 		
@@ -415,7 +451,11 @@ class Finances(Application):
 		# --- STEP
 
 		# filter by selected MONTH
-		settingsDict = self.core.readDictFromFile(self.appName)
+		args = {
+			'appName': self.appName
+		}
+		print(json.dumps(args, indent=2))
+		settingsDict = self.core.readDictFromFile(args=args)
 		filterDate = settingsDict['settings']['dateFilter']
 		#print(bool(filterDate))
 		

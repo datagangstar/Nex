@@ -537,6 +537,7 @@ class Core:
 
 		
 	def writeDictToFile(self,name,data):
+		print('writeDictToFile()')
 
 		# self.writeDictToFile(name,obj)
 	
@@ -547,11 +548,25 @@ class Core:
 
 	## END method ----------------------
 
-	def readDictFromFile(self,name):
+	def readDictFromFile(self,**kwargs):
+		print('readDictFromFile()')
 
 		# obj = self.readDictFromFile(name)
-	
-		path = f'settings/{name}.json'
+		
+		print(json.dumps(kwargs, indent=2))
+		# 'base': 'applications',
+		# 	'appName': appName,
+		# 	'type': 'features'
+		dict = kwargs['args']
+
+		path = ''
+		
+		if(dict.get('base', False)):
+			path = f'{dict["base"]}/{dict["appName"]}/{dict["type"]}.json'
+		else:
+			path = f'settings/{dict["appName"]}.json'
+
+		print(path)
 		
 		# Read data from file:
 		try: 
