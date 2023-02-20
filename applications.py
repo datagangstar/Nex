@@ -173,11 +173,10 @@ class Donations(Application):
 class Finances(Application):
 
 	"""Code Summary
-	check for required tables
+		check for required tables
  		create tables if need
    	
 	"""
-	
 	def __init__(self,core):
 		print('__init__Finances()')
 
@@ -188,6 +187,9 @@ class Finances(Application):
 		# init app parent
 		super().__init__()
 
+		
+		# --- STEP
+		
 		filename,df,headersDf = core.loadTableToDf('transactions')
 		self.filename = filename
 		#self.df = df
@@ -225,6 +227,7 @@ class Finances(Application):
 
 
 		
+		# --- STEP
 		
 		#featureDict = super().getAppFeature(self.appName)
 		args = {
@@ -234,33 +237,38 @@ class Finances(Application):
 		}
 		#print(json.dumps(args, indent=2))
 		featureDict = self.core.readDictFromFile(args=args)
-		print(json.dumps(featureDict, indent=2))
+		#print(json.dumps(featureDict, indent=2))
+
+		featureDf = pd.DataFrame()
+		for feature, value in featureDict.items():
+			#print(feature)
+			rowDf = pd.Series([feature])
+			featureDf = pd.concat([featureDf, rowDf], ignore_index=True)
+
+		#print(featureDf)
+			
 		
-		
-		methods = pd.Series([
-			'sumGroup', 
-			'sumRecurring',
-			'NAupdateStatus', 
-			'sumTotal', 
-			'viewTrans', 
-			'reviewItem', 
-			'filterDateRange',
-			'checkBudget',
-			'creditImportMacroAmazon',
-			'creditImportMacroSapphire',
-			'mechanicsImportMacro',
-			'snippet',
-			'PRIVATEperformImport'
-		])
+		# methods = pd.Series([
+		# 	'sumGroup', 
+		# 	'sumRecurring',
+		# 	'NAupdateStatus', 
+		# 	'sumTotal', 
+		# 	'viewTrans', 
+		# 	'reviewItem', 
+		# 	'filterDateRange',
+		# 	'checkBudget',
+		# 	'creditImportMacroAmazon',
+		# 	'creditImportMacroSapphire',
+		# 	'mechanicsImportMacro',
+		# 	'snippet',
+		# 	'PRIVATEperformImport'
+		# ])
 		#print(self.appMethods)
 
-		# combine parent and app methods
-		self.appMethods = methods
-		#self.appMethods = pd.concat([methods, super().getMethods()], axis=0)
-		#print(self.appMethods)
+		self.appMethods = featureDf[0].squeeze()
 
-		#self.appMethods = methods
-		#self.appMethods()
+		
+		# --- STEP
 		
 		#self.settingsDict = {}
 		
@@ -271,25 +279,35 @@ class Finances(Application):
 		self.settingsDict = self.core.readDictFromFile(args=args)
 		# obj = self.readDictFromFile(name)
 
+		
+		# --- STEP
 
-		if len(self.settingsDict) == 0:
+		# if len(self.settingsDict) == 0:
 
-			monthTimeDate = date.today().strftime("%Y-%m")
-			print(f'Default Filter Month: {monthTimeDate}')
+		# 	monthTimeDate = date.today().strftime("%Y-%m")
+		# 	print(f'Default Filter Month: {monthTimeDate}')
 			
-			#settingsDict = self.settingsDict
-			setting = {"dateFilter": ''}
-			settings = {"settings": setting}
-			settingsDict['transactions'] = settings
-			print(settingsDict)
-			self.settingsDict = settingsDict
-			print(self.settingsDict['transactions']['settings']['dateFilter'])
-		else: 
-			print('settings not empty')
-			print(self.settingsDict)
+		# 	#settingsDict = self.settingsDict
+		# 	setting = {"dateFilter": ''}
+		# 	settings = {"settings": setting}
+		# 	settingsDict['transactions'] = settings
+		# 	print(settingsDict)
+		# 	self.settingsDict = settingsDict
+		# 	print(self.settingsDict['transactions']['settings']['dateFilter'])
+		# else: 
+		# 	print('settings not empty')
+		# 	print(self.settingsDict)
 		
 	## END INIT method ----------------------
+	
+	def __repr__(self):
+		cls = type(self)
+		return f"<{cls.__module__}.{cls.__name__} object at {hex(id(self))}>"
+	
+	def __str__(self):
+		return self.__repr__()
 
+		
 	# ------ getters & setters
 		
 	# getter ------
@@ -304,129 +322,67 @@ class Finances(Application):
 	def appMethods(self, methods):
 		print('appMethods(methods)')
 		self._appMethods = methods
-		
-		
-	def sumGroup(self):
-		print(f'sumGroup()')
-
-		df = self.tableDf
-		
-		df = df.loc[df['Reviewed'] == 1]
-
-		# filter by selected MONTH
-		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
-		#df['yearMonth'] = df['Transaction Date'].dt.strftime('%Y-%m')
-		
-		if bool(filterDate):
-			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
-
-		print('------')
-
-		
-		#set type to float
-		#df['Amount'] = pd.to_numeric(df['Amount'])
-		
-		groupDf = df.groupby('Expense')['Amount'].sum()
-		print(groupDf)
-			
-		total = df['Amount'].sum()
-		print(f'Total: {total}')
-
-	## END method ----------------------
 
 
-		
-	def sumRecurring(self):
-		print(f'sumRecurring()')
-
-		df = self.tableDf
-		
-		# --- STEP - filter
-		df = df[df['Transaction Date'].dt.strftime('%Y-%m') == '2023-01']
-		
-		# --- STEP - filter
-		df = df.loc[df['Recurring'] == 1]
-		
-		# --- STEP - operation
-		net = df['Amount'].sum()
-		print(f'net: {net}')
-
-		# --- STEP - operation
-		groupDf = df.groupby('Description')['Amount'].sum()
-		print(groupDf)
-
-		
-	## END method ----------------------
-
-
-		
-	def updateStatus(self):
-		print('updateStatus()')
-
-	## END method ----------------------
-
-
-		
-	def sumTotal(self):
-		print('sumTotal()')
-		
-		df = self.tableDf
-
-		print(df.head())
-		df = df.loc[df['Reviewed'] == 1]
-
-		# filter by selected MONTH
-		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
-		print(df.head())
-			
-		if bool(filterDate):
-			#df = df[df['yearMonth'] == filterDate]
-			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
-
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
-
-		print('------')
-			
-			
-		groupDf = df.groupby('Account')['Amount'].sum()
-		print(groupDf)
-
-
-	## END method ----------------------
 
 	def viewTrans(self):
 		print('viewTrans()')
 
 		df = self.tableDf
 		
-		df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
-		df = df.sort_values(by='Transaction Date', ascending=True)
-
-		# --- STEP
-
-		# filter by selected MONTH
-		args = {
-			'appName': self.appName
+		argsDict = {
+			'operations': {
+				'sortByDate': {
+					'column':'Transaction Date',
+					'ascending':True
+				},
+				'getSettingByName': {
+					'appName':self.appName,
+					'settingName':'dateFilter'
+				},
+				'filterByDate': {
+					'column':'Transaction Date',
+					'format':'%Y-%m'
+				}
+			}
 		}
-		print(json.dumps(args, indent=2))
-		settingsDict = self.core.readDictFromFile(args=args)
 		
-		filterDate = settingsDict['settings']['dateFilter']
-		#print(bool(filterDate))
 		
-		if bool(filterDate):
-			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
 
-		print('------')
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
+		
+		# # --- STEP
+		
+		# df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
+		# df = df.sort_values(by='Transaction Date', ascending=True)
 
+		# # --- STEP
+
+		# # filter by selected MONTH
+		# args = {
+		# 	'appName': self.appName
+		# }
+		# print(json.dumps(args, indent=2))
+		# settingsDict = self.core.readDictFromFile(args=args)
+		
+		# filterDate = settingsDict['settings']['dateFilter']
+		# #print(bool(filterDate))
+		
+		# # --- STEP
+		
+		# if bool(filterDate):
+		# 	df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+		# 	print(f'Filter Month: {filterDate}')
+		# else:
+		# 	print('no date filter')
+
+		# print('------')
+
+		
+		# --- STEP
+		
 		# get report table columns
 		# headersArray = [
 		#  'Amount', 'Description', 'Expense', 'Transaction Date', 'Reviewed', 'Card'
@@ -434,119 +390,14 @@ class Finances(Application):
 		headersArray = self.core.getTableDefaultHeaders()
 		print(headersArray)
 
+		
+		# --- STEP
+		
 		# print report talbe
 		UI = self.core.UI
 		UI.printFormattedTable(self,df,headersArray)
 
 		#print(tabulate(df[self.core.getTableDefaultHeaders()], self.core.getTableDefaultHeaders(), tablefmt='psql'))
-
-	## END method ----------------------
-
-	def reviewItem(self):
-		print('reviewItem()')
-
-		df = self.tableDf
-		UI = self.core.UI
-		
-		# --- STEP
-
-		# filter by selected MONTH
-		args = {
-			'appName': self.appName
-		}
-		print(json.dumps(args, indent=2))
-		settingsDict = self.core.readDictFromFile(args=args)
-		filterDate = settingsDict['settings']['dateFilter']
-		#print(bool(filterDate))
-		
-		if bool(filterDate):
-			# do not save the report df
-			reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
-			reportDf = df.copy()
-
-		print('------')
-
-		# sort report 
-		reportDf = reportDf.sort_values(by='Transaction Date', ascending=True)
-		
-		headersArray = [
-			"Description", 
-			"Account", 
-			"Expense", 
-			"Transaction Date",
-			"Amount", 
-			"Reviewed"
-		]
-		#print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
-		
-		UI.printFormattedTable(self,reportDf,headersArray)
-		#print(df.info())
-
-		# select index
-		messagePrompt = f'select record: '
-		recordIndex = int(input(messagePrompt))
-
-		print(df.loc[recordIndex])
-
-		#
-		expenseUniques = pd.Series(df['Expense'].unique())
-		#print(expenseUniques)
-		expenseTypes = pd.Series([
-		 'Transportation', 'Supplies', 'clothes', 'entertainment', 'eating out',
-		 'Gas', 'Groceries'
-		])
-		#print(expenseTypes)
-
-		expenseList = expenseUniques.append(expenseTypes)
-		#print(expenseList)
-
-		expenseList = expenseList.drop_duplicates()
-		expenseList = expenseList.dropna()
-		expenseList.index = range(0, len(expenseList))
-		#print(expenseList)
-
-		for idx, x in enumerate(expenseList):
-			print(f'{idx}: {x}')
-
-		print('----- select input type')
-
-		# type of input
-		actionOptions = ['input new', 'select type']
-
-		for idx, x in enumerate(actionOptions):
-			print(f'{idx}: {x}')
-
-		messagePrompt = f'select Expense type: '
-		actionIndex = int(input(messagePrompt))
-
-		newValue = ''
-
-		if actionIndex == 0:
-			messagePrompt = f'enter type: '
-			typeValue = input(messagePrompt)
-			print(typeValue)
-			newValue = typeValue
-
-		else:
-
-			messagePrompt = f'select Expense id: '
-			expenseIndex = int(input(messagePrompt))
-			newValue = expenseList[expenseIndex]
-
-		print(f'newValue: {newValue}')
-
-		# update Expense Type
-		# set as reviewed
-		df.loc[recordIndex, 'Expense'] = newValue
-		df.loc[recordIndex, 'modified'] = date.today().strftime("%m/%d/%Y")
-		df.loc[recordIndex, 'Reviewed'] = 1
-		print(df.loc[recordIndex])
-
-		# write new df to file
-		self.core.writeTableDftoFile(self.filename,df,self.tableHeaderDf)
 
 	## END method ----------------------
 
@@ -556,11 +407,11 @@ class Finances(Application):
 		print('filterDateRange()')
 
 		
+		df = self.tableDf
 
 		# app feature operations
 		
-		args = {
-			
+		argsDict = {
 			'operations': {
 				'getSettingsDict': {
 					'appName':self.appName
@@ -569,6 +420,7 @@ class Finances(Application):
 					'message':'Enter filter (2022-XX): '
 				},
 				'saveSetting': {
+					'appName':self.appName,
 					'settingName':'dateFilter'
 				}
 			}
@@ -576,8 +428,9 @@ class Finances(Application):
 		
 		
 
-		data = self.core.execAppFeatureOperations(args)
-		print(data)
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
 		
 
 		
@@ -606,7 +459,166 @@ class Finances(Application):
 
 
 
-	
+	def reviewItem(self):
+		print('reviewItem()')
+
+		df = self.tableDf
+		UI = self.core.UI
+		
+		# --- STEP
+
+		# filter by selected MONTH
+		args = {
+			'appName': self.appName
+		}
+		print(json.dumps(args, indent=2))
+		settingsDict = self.core.readDictFromFile(args=args)
+		filterDate = settingsDict['settings']['dateFilter']
+		#print(bool(filterDate))
+
+		# --- STEP
+		
+		args = {
+			'operations': {
+				'getSettingsDict': {
+					'appName':self.appName
+				},
+				'getUserInput': {
+					'message':'Enter filter (2022-XX): '
+				},
+				'saveSetting': {
+					'settingName':'dateFilter'
+				}
+			}
+		}
+		
+		
+
+		#data = self.core.execAppFeatureOperations(args) print(data)
+
+
+		# --- STEP
+		
+		
+		if bool(filterDate):
+			# do not save the report df
+			reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+			print(f'Filter Month: {filterDate}')
+		else:
+			print('no date filter')
+			reportDf = df.copy()
+
+		print('------')
+
+		
+		# --- STEP
+
+		
+		# sort report 
+		reportDf = reportDf.sort_values(by='Transaction Date', ascending=True)
+		
+		
+		# --- STEP
+
+		
+		headersArray = [
+			"Description", 
+			"Account", 
+			"Expense", 
+			"Transaction Date",
+			"Amount", 
+			"Reviewed"
+		]
+		#print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
+		
+		UI.printFormattedTable(self,reportDf,headersArray)
+		#print(df.info())
+
+		
+		# --- STEP
+
+		
+		# select index
+		messagePrompt = f'select record: '
+		recordIndex = int(input(messagePrompt))
+
+		print(df.loc[recordIndex])
+
+		
+		# --- STEP
+		
+		#
+		expenseUniques = pd.Series(df['Expense'].unique())
+		#print(expenseUniques)
+		# expenseTypes = pd.Series([
+		#  'Transportation', 'Supplies', 'clothes', 'entertainment', 'eating out',
+		#  'Gas', 'Groceries'
+		# ])
+		expenseTypes = pd.Series([])
+		#print(expenseTypes)
+
+		expenseList = expenseUniques.append(expenseTypes)
+		#print(expenseList)
+
+		expenseList = expenseList.drop_duplicates()
+		expenseList = expenseList.dropna()
+		expenseList.index = range(0, len(expenseList))
+		#print(expenseList)
+
+		for idx, x in enumerate(expenseList):
+			print(f'{idx}: {x}')
+
+		print('----- select input type')
+
+		# type of input
+		actionOptions = ['input new', 'select type']
+
+		for idx, x in enumerate(actionOptions):
+			print(f'{idx}: {x}')
+
+			
+		# --- STEP
+
+			
+		messagePrompt = f'select Expense type: '
+		actionIndex = int(input(messagePrompt))
+
+		newValue = ''
+
+		if actionIndex == 0:
+			messagePrompt = f'enter type: '
+			typeValue = input(messagePrompt)
+			print(typeValue)
+			newValue = typeValue
+
+		else:
+
+			messagePrompt = f'select Expense id: '
+			expenseIndex = int(input(messagePrompt))
+			newValue = expenseList[expenseIndex]
+
+		print(f'newValue: {newValue}')
+
+		# --- STEP
+
+		
+		# update Expense Type
+		# set as reviewed
+		df.loc[recordIndex, 'Expense'] = newValue
+		df.loc[recordIndex, 'modified'] = date.today().strftime("%m/%d/%Y")
+		df.loc[recordIndex, 'Reviewed'] = 1
+		print(df.loc[recordIndex])
+
+		
+		# --- STEP
+
+		
+		# write new df to file
+		self.core.writeTableDftoFile(self.filename,df,self.tableHeaderDf)
+
+	## END method ----------------------
+
+
 	def checkBudget(self):
 		print('checkBudget()')
 		
@@ -693,6 +705,169 @@ class Finances(Application):
 	## END method ----------------------
 
 
+		
+	def sumGroup(self):
+		print(f'sumGroup()')
+
+		df = self.tableDf
+		
+		df = df.loc[df['Reviewed'] == 1]
+
+		# filter by selected MONTH
+		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		#df['yearMonth'] = df['Transaction Date'].dt.strftime('%Y-%m')
+		
+		if bool(filterDate):
+			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+			print(f'Filter Month: {filterDate}')
+		else:
+			print('no date filter')
+
+		print('------')
+
+		
+		#set type to float
+		#df['Amount'] = pd.to_numeric(df['Amount'])
+		
+		groupDf = df.groupby('Expense')['Amount'].sum()
+		print(groupDf)
+			
+		total = df['Amount'].sum()
+		print(f'Total: {total}')
+
+	## END method ----------------------
+
+
+		
+	def sumTotal(self):
+		print('sumTotal()')
+		
+		df = self.tableDf
+
+		print(df.head())
+		df = df.loc[df['Reviewed'] == 1]
+
+		# filter by selected MONTH
+		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		print(df.head())
+			
+		if bool(filterDate):
+			#df = df[df['yearMonth'] == filterDate]
+			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+
+			print(f'Filter Month: {filterDate}')
+		else:
+			print('no date filter')
+
+		print('------')
+			
+			
+		groupDf = df.groupby('Account')['Amount'].sum()
+		print(groupDf)
+
+
+	## END method ----------------------
+
+
+		
+	def sumByAccount(self):
+		print('sumByAccount()')
+
+		
+
+		# app feature operations
+		
+		args = {
+			'operations': {
+				'getSettingsDict': {
+					'appName':self.appName
+				},
+				'getUserInput': {
+					'message':'Enter filter (2022-XX): '
+				},
+				'saveSetting': {
+					'settingName':'dateFilter'
+				}
+			}
+		}
+		
+		
+
+		data = self.core.execAppFeatureOperations(args)
+		print(data)
+		
+
+	## END method ----------------------
+
+
+	
+	def tagRecurring(self):
+		print('tagRecurring()')
+
+		
+		df = self.tableDf
+
+		# app feature operations
+		args = {
+			'df': df,
+			'operations': {
+				'getSettingsDict': {
+					'appName':self.appName
+				},
+				'getUserInput': {
+					'message':'Enter filter (2022-XX): '
+				},
+				'saveSetting': {
+					'settingName':'dateFilter'
+				}
+			}
+		}
+		
+		
+
+		data = self.core.execAppFeatureOperations(args)
+		print(data)
+		
+
+	## END method ----------------------
+		
+		
+	def sumRecurring(self):
+		print(f'sumRecurring()')
+
+		df = self.tableDf
+		
+		# --- STEP - filter
+		df = df[df['Transaction Date'].dt.strftime('%Y-%m') == '2023-01']
+		
+		# --- STEP - filter
+		df = df.loc[df['Recurring'] == 1]
+		
+		# --- STEP - operation
+		net = df['Amount'].sum()
+		print(f'net: {net}')
+
+		# --- STEP - operation
+		groupDf = df.groupby('Description')['Amount'].sum()
+		print(groupDf)
+
+		
+	## END method ----------------------
+
+
+		
+	def updateStatus(self):
+		print('updateStatus()')
+
+	## END method ----------------------
+
+
+		
+	
+
+	
+
+	
 
 	
 	def creditImportMacroAmazon(self):

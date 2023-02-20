@@ -403,6 +403,8 @@ class Core:
 		self.tableDf = pd.DataFrame()
 		self.tableHeaderDf = pd.DataFrame()
 		
+		self.appDf = pd.DataFrame()
+		
 	## END INIT method ----------------------	
 
 		
@@ -464,7 +466,7 @@ class Core:
 		df = self.tableDf
 
 		colName = row['name']
-		print(colName)
+		#print(colName)
 		dtype = row['dtype']
 
 		df = df.replace(np.nan, '')
@@ -472,14 +474,14 @@ class Core:
 
 		# if 
 		if dtype == 'datetime64':
-			print('format to datetime')
+			#print('format to datetime')
 			df[colName] = pd.to_datetime(df[colName])
 		elif  dtype == 'str':
-			print('format to str')
+			#print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
 			df[colName] = df[colName].astype(str)
 		elif  dtype == 'int':
-			print('format to int')
+			#print('format to int')
 			df[colName] = df[colName].astype(str)
 			df[colName] = df[colName].replace('','0')
 			df[colName] = df[colName].replace('True', '1')
@@ -490,7 +492,7 @@ class Core:
 			#df[colName] = pd.to_numeric(df[colName])
 			df[colName] = df[colName].astype(int)
 		elif  dtype == 'number':
-			print('format to number')
+			#print('format to number')
 			#df[colName] = pd.to_datetime(df[colName])
 			#df[colName] = df[colName].astype(str)
 			df[colName] = pd.to_numeric(df[colName])
@@ -570,6 +572,7 @@ class Core:
 		
 		# Read data from file:
 		try: 
+			print('FileFound')
 			with open( path ) as file:
 				data = json.load(file)
 			return data
@@ -1006,22 +1009,23 @@ class Core:
 	# -------------
 
 			
-	def execAppFeatureOperations(self,args):
+	def execAppFeatureOperations(self,**kwargs):
 		print('execAppFeatureOperations()')
 
-		print(args)
-		print(json.dumps(args['operations'], indent=4))
 
-		df = pd.DataFrame()
+		#df = pd.DataFrame()
 		try:
-			args["df"]
+			kwargs["df"]
 			print('The key exists in the dictionary')
-			df = args['df']
+			self.appDf = kwargs['df']
 		except KeyError as error:
 			print("The key doesn't exist in the dictionary")
 			
-
-		operations = args['operations']
+		#print(kwargs['argsDict'])
+		argsDict = kwargs['argsDict']
+		operations = argsDict['operations']
+		print(json.dumps(argsDict['operations'], indent=4))
+		
 		passDict = {}
 		
 		# loop by operations
@@ -1030,12 +1034,14 @@ class Core:
 			print(method)
 			print(json.dumps(args, indent=4))
 			
-			returnData = getattr(self, method, lambda: self.default)(df=df,args=args,passDict=passDict)
+			returnData = getattr(self, method, lambda: self.default)(args=args,passDict=passDict)
 
+			#df = returnData['df']
+			passDict = returnData['passDict']
 			#returnData = getattr(self, method, lambda: self.default)(df,args,passValue)
-			passDict = returnData
-			
-		return returnData
+			#passDict = returnData
+
+		return self.appDf,passDict
 		#compArgs = {'table':'transactions'}
 		
 		#Components = self.core.Components
@@ -1075,6 +1081,106 @@ class Core:
 		return df
 		
 	## END method ----------------------
+
+		
+
+	def filterByDate(self,**kwargs):	
+		print(f'filterByDate()')
+
+		"""
+			'filterByDate': {
+				'column':'Transaction Date',
+				'format':'%Y-%m'
+			}
+		"""
+		print(json.dumps(kwargs, indent=2))
+		
+		#df = pd.DataFrame()
+		df = self.appDf
+		#df.head()
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		column = args['column']
+		format = args['format']
+		
+		passDict = kwargs['passDict']
+		filterDate = passDict['filterDate']
+
+		# --- operations
+
+		if bool(filterDate):
+			df = df[df[column].dt.strftime(format) == filterDate]
+			print(f'Filter Month: {filterDate}')
+		else:
+			print('no date filter')
+
+		print('------')
+
+		# --- 
+		self.appDf = df
+
+		# build returnDict
+		returnDict = {}
+		#returnDict['df'] = df
+		returnDict['passDict'] = ''
+		#print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+		
+		
+	def sortByDate(self,**kwargs):	
+		print(f'sortByDate()')
+
+		print(kwargs)
+		#print(json.dumps(kwargs, indent=2))
+		"""
+		  'sortByDate': {
+					'column':'Transaction Date',
+					'ascending':True
+				},
+		"""
+		
+		# --- assign parameters
+		
+		#df = kwargs['df']
+		#type(kwargs['df'])
+		#df = pd.DataFrame()
+		df = self.appDf
+		#df.head()
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		column = args['column']
+		ascending = args['ascending']
+
+		# --- operations
+
+
+		# convert column type to date - not needed
+		df[column] = pd.to_datetime(df[column])
+
+		# sort column by date
+		df = df.sort_values(by=column, ascending=ascending)
+		
+		# --- 
+		
+		self.appDf = df
+
+		# build returnDict
+		returnDict = {}
+		#returnDict['df'] = df
+		returnDict['passDict'] = ''
+		#print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+
+		
 		
 	def sum(self,df,args):	
 		print(f'sum()')
@@ -1125,25 +1231,87 @@ class Core:
 	def getSettingsDict(self,**kwargs):	
 		print(f'getSettingsDict()')
 
-		# 'getSettingsDict': {
-		# 			'name':self.appName
-		# 		},
+		"""
+		
+			'getSettingsDict': {
+				'name':self.appName
+			},
+		"""
+		
+		# --- assign parameters
+		
+		df = self.appDf
+
 		args = kwargs['args']
-		print(args)
 		print(json.dumps(args, indent=2))
 		
-		passDict = kwargs['passDict']
-		
 		appName = args['appName']
-		print(appName)
 		
-		# --- STEP
-		settingsDict = self.readDictFromFile(appName)
+		# --- operations
+		
+		args = {
+			'appName': appName
+		}
+		print(json.dumps(args, indent=2))
+		settingsDict = self.readDictFromFile(args=args)
 
-		#settingsDict = self.settingsDict
-		print(settingsDict)
-		returnDict = passDict
-		returnDict['settingsDict'] = settingsDict
+		# --- 
+		
+		self.appDf = df
+		passDict = kwargs['passDict']
+		passDict['settingsDict'] = settingsDict
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
+		
+	## END method ----------------------
+
+		
+	def getSettingByName(self,**kwargs):	
+		print(f'getSettingByName()')
+
+		"""
+		  	'getSettingByName': {
+				'appName':self.appName,
+				'setting':'dateFilter'
+			}
+		"""
+		
+		#df = pd.DataFrame()
+		df = self.appDf
+
+		#df.head()
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		appName = args['appName']
+		settingName = args['settingName']
+
+		
+		# --- operations
+
+		args = {
+			'appName': appName
+		}
+		print(json.dumps(args, indent=2))
+		settingsDict = self.readDictFromFile(args=args)
+		print(json.dumps(settingsDict, indent=2))
+		
+		filterDate = settingsDict['settings'][settingName]
+		print(filterDate)
+
+		# --- 
+
+		# build returnDict
+		returnDict = {}
+		passDict = {
+			'filterDate': filterDate
+		}
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
 		print(json.dumps(returnDict, indent=2))
 		
 		return returnDict
@@ -1154,21 +1322,34 @@ class Core:
 	def getUserInput(self,**kwargs):	
 		print(f'getUserInput()')
 
-		# 'getUserInput': {
-		# 			'message':'Enter filter (2022-XX): '
-		
+		"""
+		  	'getUserInput': {
+				'message':'Enter filter (2022-XX): '
+			}
+		"""
+
+		df = self.appDf
+
 		args = kwargs['args']
-		print(args)
 		print(json.dumps(args, indent=2))
-		
-		passDict = kwargs['passDict']
-		
+
 		messagePrompt = args['message']
+		
+		# --- operations
 		
 		value = input(messagePrompt)
 
-		returnDict = passDict
-		returnDict['value'] = value
+		# --- 
+
+		passDict = kwargs['passDict']
+		# build returnDict
+		returnDict = {}
+		# passDict = {
+		# 	'value': value
+		# }
+		passDict['value'] = value
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
 		print(json.dumps(returnDict, indent=2))
 		
 		return returnDict
@@ -1179,30 +1360,38 @@ class Core:
 	def saveSetting(self,**kwargs):	
 		print(f'saveSetting()')
 
-		# 'saveSetting': {
-		# 			'settingName':'dateFilter'
-		# 		}
-		
-		args = kwargs['args']
-		print(args)
-		print(json.dumps(args, indent=2))
-		
-		passDict = kwargs['passDict']
+		"""
+		  	'saveSetting': {
+				'settingName':'dateFilter'
+			}
+		"""
 
+		df = self.appDf
+
+		args = kwargs['args']
+		passDict = kwargs['passDict']
+		print(json.dumps(args, indent=2))
+
+		
 		settingsDict = passDict['settingsDict']
 		passValue = passDict['value']
-		print(passDict['value'])
-		
+		#print(passDict['value'])
 		
 		settingName = args['settingName']
 		
+		# --- operations
+		
+		
 		settingsDict['settings'][settingName] = passValue
-		print(settingsDict)
-		#self.core.writeDictToFile(self.appName,settingsDict)
+		print(json.dumps(settingsDict, indent=2))
+		self.writeDictToFile(settingsDict['appName'],settingsDict)
 
-		returnDict = passDict
-		returnDict['settingsDict'] = settingsDict
-		print(json.dumps(returnDict, indent=2))
+		# --- 
+
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		#print(json.dumps(returnDict, indent=2))
 		
 		return returnDict
 		
