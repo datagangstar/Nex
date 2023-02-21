@@ -1009,22 +1009,23 @@ class Core:
 	# -------------
 
 			
-	def execAppFeatureOperations(self,**kwargs):
+	def execAppFeatureOperations(self,df,argsDict):
 		print('execAppFeatureOperations()')
 
+		#print(json.dumps(kwargs, indent=4))
 
 		#df = pd.DataFrame()
-		try:
-			kwargs["df"]
-			print('The key exists in the dictionary')
-			self.appDf = kwargs['df']
-		except KeyError as error:
-			print("The key doesn't exist in the dictionary")
+		# try:
+		# 	kwargs["df"]
+		# 	print('The key exists in the dictionary')
+		self.appDf = df
+		# except KeyError as error:
+		# 	print("The key doesn't exist in the dictionary")
 			
 		#print(kwargs['argsDict'])
-		argsDict = kwargs['argsDict']
+		#argsDict = kwargs['argsDict']
+		print(json.dumps(argsDict, indent=4))
 		operations = argsDict['operations']
-		print(json.dumps(argsDict['operations'], indent=4))
 		
 		passDict = {}
 		
@@ -1318,45 +1319,7 @@ class Core:
 		
 	## END method ----------------------
 
-		
-	def getUserInput(self,**kwargs):	
-		print(f'getUserInput()')
-
-		"""
-		  	'getUserInput': {
-				'message':'Enter filter (2022-XX): '
-			}
-		"""
-
-		df = self.appDf
-
-		args = kwargs['args']
-		print(json.dumps(args, indent=2))
-
-		messagePrompt = args['message']
-		
-		# --- operations
-		
-		value = input(messagePrompt)
-
-		# --- 
-
-		passDict = kwargs['passDict']
-		# build returnDict
-		returnDict = {}
-		# passDict = {
-		# 	'value': value
-		# }
-		passDict['value'] = value
-		#returnDict['df'] = df
-		returnDict['passDict'] = passDict
-		print(json.dumps(returnDict, indent=2))
-		
-		return returnDict
-		
-	## END method ----------------------
-
-		
+	
 	def saveSetting(self,**kwargs):	
 		print(f'saveSetting()')
 
@@ -1398,6 +1361,86 @@ class Core:
 	## END method ----------------------
 		
 
+		
+	def getUserInput(self,**kwargs):	
+		print(f'getUserInput()')
+
+		"""
+		  	'getUserInput': {
+				'message':'Enter filter (2022-XX): '
+			}
+		"""
+
+		df = self.appDf
+
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		messagePrompt = args['message']
+		
+		# --- operations
+		
+		value = input(messagePrompt)
+
+		# --- 
+
+		passDict = kwargs['passDict']
+		# build returnDict
+		returnDict = {}
+		# passDict = {
+		# 	'value': value
+		# }
+		passDict['value'] = value
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+	
+	def printReportTable(self,**kwargs):	
+		print(f'printReportTable()')
+
+		"""
+		  	'printReportTable': {
+					'headerSet':'default'
+				}
+		"""
+
+		df = self.appDf
+
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		headerSet = args['headerSet']
+		
+		# --- operations
+		
+		headersArray = self.getTableDefaultHeaders()
+		print(headersArray)
+
+		# print report talbe
+		UI.printFormattedTable(self,df,headersArray)
+		
+		# --- 
+
+		passDict = kwargs['passDict']
+		# build returnDict
+		returnDict = {}
+		# passDict = {
+		# 	'value': value
+		# }
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+		
 		
 ## END Core Class ======
 

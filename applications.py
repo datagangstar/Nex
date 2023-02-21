@@ -343,6 +343,9 @@ class Finances(Application):
 				'filterByDate': {
 					'column':'Transaction Date',
 					'format':'%Y-%m'
+				},
+				'printReportTable': {
+					'headerSet':'default'
 				}
 			}
 		}
@@ -386,16 +389,14 @@ class Finances(Application):
 		# get report table columns
 		# headersArray = [
 		#  'Amount', 'Description', 'Expense', 'Transaction Date', 'Reviewed', 'Card'
-		# ]
-		headersArray = self.core.getTableDefaultHeaders()
-		print(headersArray)
+		# # ]
+		# headersArray = self.core.getTableDefaultHeaders()
+		# print(headersArray)
 
 		
-		# --- STEP
-		
-		# print report talbe
-		UI = self.core.UI
-		UI.printFormattedTable(self,df,headersArray)
+		# # print report talbe
+		# UI = self.core.UI
+		# UI.printFormattedTable(self,df,headersArray)
 
 		#print(tabulate(df[self.core.getTableDefaultHeaders()], self.core.getTableDefaultHeaders(), tablefmt='psql'))
 
@@ -464,33 +465,68 @@ class Finances(Application):
 
 		df = self.tableDf
 		UI = self.core.UI
-		
-		# --- STEP
 
-		# filter by selected MONTH
-		args = {
-			'appName': self.appName
-		}
-		print(json.dumps(args, indent=2))
-		settingsDict = self.core.readDictFromFile(args=args)
-		filterDate = settingsDict['settings']['dateFilter']
-		#print(bool(filterDate))
-
-		# --- STEP
 		
-		args = {
+		
+		
+		argsDict = {
 			'operations': {
-				'getSettingsDict': {
-					'appName':self.appName
+				'getSettingByName': {
+					'appName':self.appName,
+					'settingName':'dateFilter'
+				},
+				'filterByDate': {
+					'column':'Transaction Date',
+					'format':'%Y-%m'
+				},
+				'sortByDate': {
+					'column':'Transaction Date',
+					'ascending':True
+				},
+				'printReportTable': {
+					'headerSet':'custom',
+					'headers':''
 				},
 				'getUserInput': {
-					'message':'Enter filter (2022-XX): '
-				},
-				'saveSetting': {
-					'settingName':'dateFilter'
+					'message':'select record: '
 				}
 			}
 		}
+		
+		
+
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
+
+		
+		
+		# --- STEP
+
+		# # filter by selected MONTH
+		# args = {
+		# 	'appName': self.appName
+		# }
+		# print(json.dumps(args, indent=2))
+		# settingsDict = self.core.readDictFromFile(args=args)
+		# filterDate = settingsDict['settings']['dateFilter']
+		# #print(bool(filterDate))
+
+		# # --- STEP
+		
+		# args = {
+		# 	'operations': {
+		# 		'getSettingsDict': {
+		# 			'appName':self.appName
+		# 		},
+		# 		'getUserInput': {
+		# 			'message':'Enter filter (2022-XX): '
+		# 		},
+		# 		'saveSetting': {
+		# 			'settingName':'dateFilter'
+		# 		}
+		# 	}
+		# }
 		
 		
 
@@ -500,49 +536,49 @@ class Finances(Application):
 		# --- STEP
 		
 		
-		if bool(filterDate):
-			# do not save the report df
-			reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
-			reportDf = df.copy()
+		# if bool(filterDate):
+		# 	# do not save the report df
+		# 	reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+		# 	print(f'Filter Month: {filterDate}')
+		# else:
+		# 	print('no date filter')
+		# 	reportDf = df.copy()
 
-		print('------')
+		# print('------')
+
+		
+		# # --- STEP
+
+		
+		# # sort report 
+		# reportDf = reportDf.sort_values(by='Transaction Date', ascending=True)
+		
+		
+		# --- STEP
+
+		
+		# headersArray = [
+		# 	"Description", 
+		# 	"Account", 
+		# 	"Expense", 
+		# 	"Transaction Date",
+		# 	"Amount", 
+		# 	"Reviewed"
+		# ]
+		# #print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
+		
+		# UI.printFormattedTable(self,reportDf,headersArray)
+		# #print(df.info())
 
 		
 		# --- STEP
 
 		
-		# sort report 
-		reportDf = reportDf.sort_values(by='Transaction Date', ascending=True)
-		
-		
-		# --- STEP
+		# # select index
+		# messagePrompt = f'select record: '
+		# recordIndex = int(input(messagePrompt))
 
-		
-		headersArray = [
-			"Description", 
-			"Account", 
-			"Expense", 
-			"Transaction Date",
-			"Amount", 
-			"Reviewed"
-		]
-		#print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
-		
-		UI.printFormattedTable(self,reportDf,headersArray)
-		#print(df.info())
-
-		
-		# --- STEP
-
-		
-		# select index
-		messagePrompt = f'select record: '
-		recordIndex = int(input(messagePrompt))
-
-		print(df.loc[recordIndex])
+		# print(df.loc[recordIndex])
 
 		
 		# --- STEP
