@@ -1039,6 +1039,7 @@ class Core:
 
 			#df = returnData['df']
 			passDict = returnData['passDict']
+			print(json.dumps(passDict, indent=2))
 			#returnData = getattr(self, method, lambda: self.default)(df,args,passValue)
 			#passDict = returnData
 
@@ -1119,13 +1120,12 @@ class Core:
 		print('------')
 
 		# --- 
+		
 		self.appDf = df
-
+		
 		# build returnDict
 		returnDict = {}
-		#returnDict['df'] = df
-		returnDict['passDict'] = ''
-		#print(json.dumps(returnDict, indent=2))
+		returnDict['passDict'] = passDict
 		
 		return returnDict
 		
@@ -1169,12 +1169,11 @@ class Core:
 		# --- 
 		
 		self.appDf = df
-
+		passDict = kwargs['passDict']
+		
 		# build returnDict
 		returnDict = {}
-		#returnDict['df'] = df
-		returnDict['passDict'] = ''
-		#print(json.dumps(returnDict, indent=2))
+		returnDict['passDict'] = passDict
 		
 		return returnDict
 		
@@ -1305,15 +1304,14 @@ class Core:
 		print(filterDate)
 
 		# --- 
-
+		
+		self.appDf = df
+		passDict = kwargs['passDict']
+		passDict['filterDate'] = filterDate
+		
 		# build returnDict
 		returnDict = {}
-		passDict = {
-			'filterDate': filterDate
-		}
-		#returnDict['df'] = df
 		returnDict['passDict'] = passDict
-		print(json.dumps(returnDict, indent=2))
 		
 		return returnDict
 		
@@ -1359,7 +1357,15 @@ class Core:
 		return returnDict
 		
 	## END method ----------------------
+
+
+
+
+
+
+
 		
+	## UI methods ----------------------
 
 		
 	def getUserInput(self,**kwargs):	
@@ -1368,6 +1374,7 @@ class Core:
 		"""
 		  	'getUserInput': {
 				'message':'Enter filter (2022-XX): '
+				'valueName':'recordId'
 			}
 		"""
 
@@ -1379,18 +1386,30 @@ class Core:
 		messagePrompt = args['message']
 		
 		# --- operations
-		
-		value = input(messagePrompt)
+
+		if args['returnType'] == 'int':
+			print('is int')
+			value = int(input(messagePrompt))
+
+		print(type(value))
 
 		# --- 
 
+		self.appDf = df
+		
 		passDict = kwargs['passDict']
+		print(json.dumps(passDict, indent=2))
 		# build returnDict
 		returnDict = {}
-		# passDict = {
-		# 	'value': value
-		# }
-		passDict['value'] = value
+		
+		try:
+			args['valueName']
+			passDict[args['valueName']] = value
+			print('valueName exists in the args')
+		except KeyError as error:
+			print('valueName DNE in the args')
+			passDict['value'] = value
+		
 		#returnDict['df'] = df
 		returnDict['passDict'] = passDict
 		print(json.dumps(returnDict, indent=2))
@@ -1398,6 +1417,89 @@ class Core:
 		return returnDict
 		
 	## END method ----------------------
+
+
+	
+	def getListofUniques(self,**kwargs):	
+		print(f'getListofUniques()')
+
+		"""
+		  	'getListofUniques': {
+				'column':'Expense'
+			}
+		"""
+
+		df = self.appDf
+
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		column = args['column']
+		
+		# --- operations
+		
+		expenseList = pd.Series(df[column].unique())
+
+		expenseList = expenseList.drop_duplicates()
+		expenseList = expenseList.dropna()
+		expenseList.index = range(0, len(expenseList))
+		print(expenseList)
+
+		# --- 
+
+		self.appDf = df
+		
+		passDict = kwargs['passDict']
+		# build returnDict
+		returnDict = {}
+		passDict['list'] = expenseList.to_string()
+
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+	
+	
+	def printOptionsList(self,**kwargs):	
+		print(f'printOptionsList()')
+
+		"""
+		  	'printOptionsList': {
+				}
+		"""
+
+		df = self.appDf
+
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		list = args['list']
+		list = list.to_json()
+		
+		# --- operations
+		
+		for idx, x in enumerate(list):
+			print(f'{idx}: {x}')
+
+		# --- 
+
+		self.appDf = df
+		
+		passDict = kwargs['passDict']
+		# build returnDict
+		returnDict = {}
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
 
 	
 	def printReportTable(self,**kwargs):	
@@ -1429,10 +1531,6 @@ class Core:
 		passDict = kwargs['passDict']
 		# build returnDict
 		returnDict = {}
-		# passDict = {
-		# 	'value': value
-		# }
-		#returnDict['df'] = df
 		returnDict['passDict'] = passDict
 		print(json.dumps(returnDict, indent=2))
 		

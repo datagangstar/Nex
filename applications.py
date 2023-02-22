@@ -488,7 +488,14 @@ class Finances(Application):
 					'headers':''
 				},
 				'getUserInput': {
-					'message':'select record: '
+					'returnType':'int',
+					'message':'select record: ',
+					'valueName':'recordId'
+				},
+				'getListofUniques': {
+					'column':'Expense'
+				},
+				'printOptionsList': {
 				}
 			}
 		}
