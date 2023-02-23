@@ -1,3 +1,3 @@
-Transaction Number,Date,Description,Memo,Amount Debit,Amount Credit,Balance,Check Number,Fees  
-"20230213000000[-8:PST]*200.00*501**Online Banking Transfer from XXXXXX4411on 2/13/2023 at 13:25 34th BD dinner",02/13/2023,"Online Banking Transfer from XXXXXX4411on 2/13/2023 at 13:25 34th BD dinner","",,200.00,"10195.62",,0.00
-"20230213000000[-8:PST]*299.70*501**Deposit",02/13/2023,"Deposit","",,299.70,"9995.62",,0.00
+Transaction Number,Date,Description,Memo,Amount Debit,Amount Credit,Check Number,Fees  
+"20230221000000[-8:PST]*-1074.39*0**CHASE CREDIT CRD AUTOPAY 000000000582661",02/21/2023,"CHASE CREDIT CRD AUTOPAY 000000000582661","",-1074.39,,,0.00
+"20230217000000[-8:PST]*1830.19*501**TOYOTA MOTOR SAL PAYROLL 568349-TLS",02/17/2023,"TOYOTA MOTOR SAL PAYROLL 568349-TLS","",,1830.19,,0.00

@@ -1384,6 +1384,8 @@ class Core:
 		print(json.dumps(args, indent=2))
 
 		messagePrompt = args['message']
+
+		value = ''
 		
 		# --- operations
 
@@ -1452,7 +1454,7 @@ class Core:
 		passDict = kwargs['passDict']
 		# build returnDict
 		returnDict = {}
-		passDict['list'] = expenseList.to_string()
+		passDict['list'] = expenseList.to_json()
 
 		#returnDict['df'] = df
 		returnDict['passDict'] = passDict
@@ -1477,8 +1479,9 @@ class Core:
 		args = kwargs['args']
 		print(json.dumps(args, indent=2))
 
-		list = args['list']
-		list = list.to_json()
+		passDict = kwargs['passDict']
+		listJson = passDict['list']
+		list = pd.read_json(listJson, typ='series', orient='records')
 		
 		# --- operations
 		
@@ -1489,7 +1492,6 @@ class Core:
 
 		self.appDf = df
 		
-		passDict = kwargs['passDict']
 		# build returnDict
 		returnDict = {}
 		#returnDict['df'] = df

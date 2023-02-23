@@ -418,7 +418,9 @@ class Finances(Application):
 					'appName':self.appName
 				},
 				'getUserInput': {
-					'message':'Enter filter (2022-XX): '
+					'returnType':'',
+					'message':'Enter filter (2022-XX): ',
+					'valueName':'value'
 				},
 				'saveSetting': {
 					'appName':self.appName,
