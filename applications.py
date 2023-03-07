@@ -181,6 +181,7 @@ class Finances(Application):
 		print('__init__Finances()')
 
 		self.appName = 'finances'
+		self.tableName = 'transactions'
 
 		self.core = core
 
@@ -331,23 +332,30 @@ class Finances(Application):
 		df = self.tableDf
 		
 		argsDict = {
-			'operations': {
-				'sortByDate': {
-					'column':'Transaction Date',
-					'ascending':True
+			'operations': [
+				{
+					'sortByDate': {
+						'column':'Transaction Date',
+						'ascending':True
+					}
 				},
-				'getSettingByName': {
-					'appName':self.appName,
-					'settingName':'dateFilter'
+				{	'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
 				},
-				'filterByDate': {
-					'column':'Transaction Date',
-					'format':'%Y-%m'
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
 				},
-				'printReportTable': {
-					'headerSet':'default'
+				{
+					'printReportTable': {
+						'headerSet':'default'
+					}
 				}
-			}
+			]
 		}
 		
 		
@@ -413,21 +421,28 @@ class Finances(Application):
 		# app feature operations
 		
 		argsDict = {
-			'operations': {
-				'getSettingsDict': {
-					'appName':self.appName
+			'operations': [
+				{
+					'getSettingsDict': {
+						'appName':self.appName
+					}
 				},
-				'getUserInput': {
-					'returnType':'',
-					'message':'Enter filter (2022-XX): ',
-					'valueName':'value'
+				{
+					'getUserInput': {
+						'returnType':'str',
+						'message':'Enter filter (2022-XX): ',
+						'valueName':'value'
+					}
 				},
-				'saveSetting': {
-					'appName':self.appName,
-					'settingName':'dateFilter'
-				}
-			}
+				{
+					'saveSetting': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
+				}	
+			]
 		}
+
 		
 		
 
@@ -472,39 +487,105 @@ class Finances(Application):
 		
 		
 		argsDict = {
-			'operations': {
-				'getSettingByName': {
-					'appName':self.appName,
-					'settingName':'dateFilter'
+			'operations': [
+				{
+					'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
 				},
-				'filterByDate': {
-					'column':'Transaction Date',
-					'format':'%Y-%m'
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
 				},
-				'sortByDate': {
-					'column':'Transaction Date',
-					'ascending':True
+				{
+					'sortByDate': {
+						'column':'Transaction Date',
+						'ascending':True
+					}
 				},
-				'printReportTable': {
-					'headerSet':'custom',
-					'headers':''
+				{
+					'printReportTable': {
+						'headerSet':'custom',
+						'headers':''
+					}
 				},
-				'getUserInput': {
-					'returnType':'int',
-					'message':'select record: ',
-					'valueName':'recordId'
+				{
+					'getUserInput': {
+						'returnType':'int',
+						'message':'Select Record: ',
+						'valueName':'recordId'
+					}
 				},
-				'getListofUniques': {
-					'column':'Expense'
+				{
+					'getListofUniques': {
+						'dataStructure':'table',
+						'tableName':'transactions',
+						'phase':'source',
+						'column':'Expense'
+					}
 				},
-				'printOptionsList': {
+				{
+					'printOptionsList': {
+					}
+				},
+				{
+					'getUserInput': {
+						'returnType':'int',
+						'message':'Select Expense option: ',
+						'valueName':'optionIndex'
+					}
+				},
+				{
+					'getSelectedOptionFromList': {
+					}
+				},
+				{
+					'updateCellValue': {
+						'column':'Expense',
+						'valueSource':'passValue'
+					},
+				},
+				{
+					'updateCellValue': {
+						'column':'modified',
+						'valueSource':'today'
+					},
+				},
+				{
+					'updateCellValue': {
+						'column':'Reviewed',
+						'valueSource':'static',
+						'value':1
+					},
+				},
+				{
+					'updateCellValue': {
+						'column':'Reviewed',
+						'valueSource':'static',
+						'value':1
+					},
+				},
+				{
+					'updateTable': {
+						'filename':self.filename
+					},
 				}
-			}
+				# },
+				# {
+				# 	'reloadTable': {
+				# 		'filename':self.tableName
+				# 	},
+				# }
+			]
 		}
 		
 		
 
 		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		self.tableDf = df
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
 
@@ -593,73 +674,74 @@ class Finances(Application):
 		# --- STEP
 		
 		#
-		expenseUniques = pd.Series(df['Expense'].unique())
-		#print(expenseUniques)
-		# expenseTypes = pd.Series([
-		#  'Transportation', 'Supplies', 'clothes', 'entertainment', 'eating out',
-		#  'Gas', 'Groceries'
-		# ])
-		expenseTypes = pd.Series([])
-		#print(expenseTypes)
+		# expenseUniques = pd.Series(df['Expense'].unique())
+		# #print(expenseUniques)
+		# # expenseTypes = pd.Series([
+		# #  'Transportation', 'Supplies', 'clothes', 'entertainment', 'eating out',
+		# #  'Gas', 'Groceries'
+		# # ])
+		# expenseTypes = pd.Series([])
+		# #print(expenseTypes)
 
-		expenseList = expenseUniques.append(expenseTypes)
-		#print(expenseList)
+		# expenseList = expenseUniques.append(expenseTypes)
+		# #print(expenseList)
 
-		expenseList = expenseList.drop_duplicates()
-		expenseList = expenseList.dropna()
-		expenseList.index = range(0, len(expenseList))
-		#print(expenseList)
+		# expenseList = expenseList.drop_duplicates()
+		# expenseList = expenseList.dropna()
+		# expenseList.index = range(0, len(expenseList))
+		# #print(expenseList)
 
-		for idx, x in enumerate(expenseList):
-			print(f'{idx}: {x}')
+		# for idx, x in enumerate(expenseList):
+		# 	print(f'{idx}: {x}')
 
-		print('----- select input type')
+		# print('----- select input type')
 
-		# type of input
-		actionOptions = ['input new', 'select type']
+		# # type of input
+		# actionOptions = ['input new', 'select type']
 
-		for idx, x in enumerate(actionOptions):
-			print(f'{idx}: {x}')
-
-			
-		# --- STEP
+		# for idx, x in enumerate(actionOptions):
+		# 	print(f'{idx}: {x}')
 
 			
-		messagePrompt = f'select Expense type: '
-		actionIndex = int(input(messagePrompt))
+		# # --- STEP
 
-		newValue = ''
+			
+		# messagePrompt = f'select Expense type: '
+		# actionIndex = int(input(messagePrompt))
 
-		if actionIndex == 0:
-			messagePrompt = f'enter type: '
-			typeValue = input(messagePrompt)
-			print(typeValue)
-			newValue = typeValue
+		# newValue = ''
 
-		else:
+		# if actionIndex == 0:
+		# 	messagePrompt = f'enter type: '
+		# 	typeValue = input(messagePrompt)
+		# 	print(typeValue)
+		# 	newValue = typeValue
 
-			messagePrompt = f'select Expense id: '
-			expenseIndex = int(input(messagePrompt))
-			newValue = expenseList[expenseIndex]
+		# else:
 
-		print(f'newValue: {newValue}')
+		# 	messagePrompt = f'select Expense id: '
+		# 	expenseIndex = int(input(messagePrompt))
+		# 	newValue = expenseList[expenseIndex]
+
+		# print(f'newValue: {newValue}')
 
 		# --- STEP
 
-		
-		# update Expense Type
-		# set as reviewed
-		df.loc[recordIndex, 'Expense'] = newValue
-		df.loc[recordIndex, 'modified'] = date.today().strftime("%m/%d/%Y")
-		df.loc[recordIndex, 'Reviewed'] = 1
-		print(df.loc[recordIndex])
+		# updateCellValue
+		# # update Expense Type
+		# # set as reviewed
+		# # column, valueName
+		# df.loc[recordIndex, 'Expense'] = newValue
+		# df.loc[recordIndex, 'modified'] = date.today().strftime("%m/%d/%Y")
+		# df.loc[recordIndex, 'Reviewed'] = 1
+		# print(df.loc[recordIndex])
 
 		
 		# --- STEP
 
 		
 		# write new df to file
-		self.core.writeTableDftoFile(self.filename,df,self.tableHeaderDf)
+		#self.core.writeTableDftoFile(self.filename,df,self.tableHeaderDf)
 
 	## END method ----------------------
 
@@ -755,30 +837,99 @@ class Finances(Application):
 		print(f'sumGroup()')
 
 		df = self.tableDf
+				
+		argsDict = {
+			'operations': [
+				{
+					'filterColumnByValue': {
+						'column':'Reviewed',
+						'value':1
+					}
+				},
+				{	'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
+				},
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
+				},
+				{
+					'sumByColumn': {
+						'targetColumn':'Amount',
+						'totalName':'total'
+					}
+				},
+				{
+					'printMetric': {
+						'message':'Sum total: ',
+						'totalName':'total'
+					}
+				},
+				{
+					'sumDollarByColumn': {
+						'groupColumn':'Expense',
+						'targetColumn':'Amount'
+					}
+				},
+				{
+					'printReportTable': {
+					}
+				}
+			]
+		}
 		
-		df = df.loc[df['Reviewed'] == 1]
+		
 
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
+
+
+
+
+
+
+
+
+
+
+
+
+		# --- STEP
+		
+		
+		#df = df.loc[df['Reviewed'] == 1]
+
+		# --- STEP
+		
 		# filter by selected MONTH
-		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		#filterDate = self.settingsDict['transactions']['settings']['dateFilter']
 		#df['yearMonth'] = df['Transaction Date'].dt.strftime('%Y-%m')
 		
-		if bool(filterDate):
-			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
+		# if bool(filterDate):
+		# 	df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+		# 	print(f'Filter Month: {filterDate}')
+		# else:
+		# 	print('no date filter')
 
-		print('------')
+		# print('------')
 
+		# --- STEP
 		
 		#set type to float
 		#df['Amount'] = pd.to_numeric(df['Amount'])
 		
-		groupDf = df.groupby('Expense')['Amount'].sum()
-		print(groupDf)
+		# groupDf = df.groupby('Expense')['Amount'].sum()
+		# print(groupDf)
 			
-		total = df['Amount'].sum()
-		print(f'Total: {total}')
+		# --- STEP
+		
+		# total = df['Amount'].sum()
+		# print(f'Total: {total}')
 
 	## END method ----------------------
 
@@ -788,27 +939,73 @@ class Finances(Application):
 		print('sumTotal()')
 		
 		df = self.tableDf
+				
+		argsDict = {
+			'operations': [
+				{
+					'filterColumnByValue': {
+						'column':'Reviewed',
+						'value':1
+					}
+				},
+				{	'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
+				},
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
+				},
+				{
+					'sumByColumn': {
+						'targetColumn':'Amount',
+						'totalName':'total'
+					}
+				},
+				{
+					'printMetric': {
+						'message':'Sum total: ',
+						'totalName':'total'
+					}
+				}
+			]
+		}
+		
+		
 
-		print(df.head())
-		df = df.loc[df['Reviewed'] == 1]
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
 
-		# filter by selected MONTH
-		filterDate = self.settingsDict['transactions']['settings']['dateFilter']
-		print(df.head())
+
+
+		# --- STEP
+		
+
+		# print(df.head())
+		# df = df.loc[df['Reviewed'] == 1]
+
+		# # filter by selected MONTH
+		# filterDate = self.settingsDict['transactions']['settings']['dateFilter']
+		# print(df.head())
 			
-		if bool(filterDate):
-			#df = df[df['yearMonth'] == filterDate]
-			df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
+		# if bool(filterDate):
+		# 	#df = df[df['yearMonth'] == filterDate]
+		# 	df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 
-			print(f'Filter Month: {filterDate}')
-		else:
-			print('no date filter')
+		# 	print(f'Filter Month: {filterDate}')
+		# else:
+		# 	print('no date filter')
 
-		print('------')
+		# print('------')
 			
+		# # --- STEP
 			
-		groupDf = df.groupby('Account')['Amount'].sum()
-		print(groupDf)
+		# groupDf = df.groupby('Account')['Amount'].sum()
+		# print(groupDf)
 
 
 	## END method ----------------------
@@ -818,28 +1015,45 @@ class Finances(Application):
 	def sumByAccount(self):
 		print('sumByAccount()')
 
+		df = self.tableDf
 		
-
-		# app feature operations
-		
-		args = {
-			'operations': {
-				'getSettingsDict': {
-					'appName':self.appName
+		argsDict = {
+			'operations': [
+				{
+					'filterColumnByValue': {
+						'column':'Reviewed',
+						'value':1
+					}
 				},
-				'getUserInput': {
-					'message':'Enter filter (2022-XX): '
+				{	'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
 				},
-				'saveSetting': {
-					'settingName':'dateFilter'
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
+				},
+				{
+					'sumDollarByColumn': {
+						'groupColumn':'Account',
+						'targetColumn':'Amount'
+					}
+				},
+				{
+					'printReportTable': {
+					}
 				}
-			}
+			]
 		}
 		
 		
 
-		data = self.core.execAppFeatureOperations(args)
-		print(data)
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
 		
 
 	## END method ----------------------
@@ -1112,13 +1326,54 @@ class Finances(Application):
 	def snippet(self):
 		print('snippet()')
 		
-		args = {
-			'operations': {
-				'component':{'name':'backupTable','table':'transactions'}
-			}
+		
+		argsDict = {
+		    "operations": [
+		        {
+		            # "key": 1,
+		            "getSettingsDict": {
+					    "appName":"self.appName"
+				    }
+		        },
+		        {
+		            # "key": 2,
+		            "getUserInput": {
+		                "returnType":"str",
+		                "message":"Enter filter (2022-XX): ",
+		                "valueName":"value"
+		            }
+		        },
+		        {
+		            # "key": 3,
+		            "saveSetting": {
+		                "appName":"self.appName",
+		                "settingName":"dateFilter"
+				    }
+		        },
+		        {
+		            # "key": 2,
+		            "getUserInput": {
+		                "returnType":"str",
+		                "message":"Enter filter (2022-XX): ",
+		                "valueName":"value"
+		            }
+		        }
+		    ]
 		}
 
-		self.execAppFeatureOperations(args)
+		
+		print(json.dumps(argsDict, indent=4))
+		operations = argsDict['operations']
+		
+		passDict = {}
+		
+		# loop by operations
+			# call components & pass args
+		for dict in operations:
+			for method, args in dict.items():
+				print(method)
+				print(json.dumps(args, indent=4))
+			
 
 
 	## END method ----------------------

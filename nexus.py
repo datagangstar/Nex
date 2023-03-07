@@ -507,6 +507,7 @@ class Core:
 		print(f'---> loadTableToDf({tableName})')
 	
 		# build filename
+		print(self.datasetsDf)
 		index = self.datasetsDf[self.datasetsDf['name'] == tableName].index
 		self.selectedDatasetIndex = index[0]
 
@@ -1031,17 +1032,19 @@ class Core:
 		
 		# loop by operations
 			# call components & pass args
-		for method, args in operations.items():
-			print(method)
-			print(json.dumps(args, indent=4))
-			
-			returnData = getattr(self, method, lambda: self.default)(args=args,passDict=passDict)
-
-			#df = returnData['df']
-			passDict = returnData['passDict']
-			print(json.dumps(passDict, indent=2))
-			#returnData = getattr(self, method, lambda: self.default)(df,args,passValue)
-			#passDict = returnData
+		
+		for dict in operations:
+			for method, args in dict.items():
+				print(method)
+				print(json.dumps(args, indent=4))
+				
+				returnData = getattr(self, method, lambda: self.default)(args=args,passDict=passDict)
+	
+				#df = returnData['df']
+				passDict = returnData['passDict']
+				print(json.dumps(passDict, indent=2))
+				#returnData = getattr(self, method, lambda: self.default)(df,args,passValue)
+				#passDict = returnData
 
 		return self.appDf,passDict
 		#compArgs = {'table':'transactions'}
@@ -1073,14 +1076,40 @@ class Core:
 		
 	## END method ----------------------
 		
-	def filterBy(self,df,args):	
-		print(f'filterBy()')
+	def filterColumnByValue(self,**kwargs):	
+		print(f'filterColumnByValue()')
 		
+		"""
+			'filterColumnByValue': {
+						'column':'Reviewed',
+						'value':1
+					}
+		"""
+		print(json.dumps(kwargs, indent=2))
+		
+		#df = pd.DataFrame()
+		df = self.appDf
+		#df.head()
+		args = kwargs['args']
+		passDict = kwargs['passDict']
 		print(json.dumps(args, indent=2))
 
-		df = df.loc[df[args['column']] == args['value']]
+		column = args['column']
+		value = args['value']
 
-		return df
+		# --- operations
+
+		df = df.loc[df[column] == value]
+
+		# --- 
+		
+		self.appDf = df
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
 		
 	## END method ----------------------
 
@@ -1152,6 +1181,7 @@ class Core:
 		df = self.appDf
 		#df.head()
 		args = kwargs['args']
+		passDict = kwargs['passDict']
 		print(json.dumps(args, indent=2))
 
 		column = args['column']
@@ -1161,7 +1191,7 @@ class Core:
 
 
 		# convert column type to date - not needed
-		df[column] = pd.to_datetime(df[column])
+		#df[column] = pd.to_datetime(df[column])
 
 		# sort column by date
 		df = df.sort_values(by=column, ascending=ascending)
@@ -1169,7 +1199,7 @@ class Core:
 		# --- 
 		
 		self.appDf = df
-		passDict = kwargs['passDict']
+		
 		
 		# build returnDict
 		returnDict = {}
@@ -1180,7 +1210,85 @@ class Core:
 	## END method ----------------------
 
 
+	def sumByColumn(self,**kwargs):	
+		print(f'sumByColumn()')
 		
+		"""
+			'sumByColumn': {
+				'targetColumn':'Amount',
+				'totalName':'total',
+				'dataType':'Currency'
+			}
+		"""
+		print(json.dumps(kwargs, indent=2))
+		
+		#df = pd.DataFrame()
+		df = self.appDf
+		#df.head()
+		args = kwargs['args']
+		passDict = kwargs['passDict']
+		print(json.dumps(args, indent=2))
+
+		targetColumn = args['targetColumn']
+		totalName = args['totalName']
+
+		# --- operations
+
+		total = df[targetColumn].sum()
+
+		# --- 
+		
+		self.appDf = df
+		
+		passDict['totalName'] = total
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
+		
+	## END method ----------------------
+
+		
+		
+	def sumDollarByColumn(self,**kwargs):	
+		print(f'sumDollarByColumn()')
+		
+		"""
+			'sumDollarByColumn': {
+				'groupColumn':'Expense',
+				'targetColumn':'Amount'
+			}
+		"""
+		print(json.dumps(kwargs, indent=2))
+		
+		#df = pd.DataFrame()
+		df = self.appDf
+		#df.head()
+		args = kwargs['args']
+		passDict = kwargs['passDict']
+		print(json.dumps(args, indent=2))
+
+		groupColumn = args['groupColumn']
+		targetColumn = args['targetColumn']
+
+		# --- operations
+
+		groupDf = df.groupby(groupColumn)[targetColumn].sum()
+
+		# --- 
+		
+		self.appDf = groupDf
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
+		
+	## END method ----------------------
+
 		
 	def sum(self,df,args):	
 		print(f'sum()')
@@ -1359,7 +1467,154 @@ class Core:
 	## END method ----------------------
 
 
+		
+	def updateCellValue(self,**kwargs):	
+		print(f'updateCellValue()')
 
+		"""
+  
+		# update Expense Type
+		# set as reviewed
+		# column, 
+  		# valueType: passValue, today, 
+  
+		  'updateCellValue': {
+					'column':'Expense',
+					'valueSource':'passValue'
+				},
+
+  'updateCellValue': {
+					'column':'modified',
+					'valueSource':'today'
+				},
+
+  'updateCellValue': {
+					'column':'Reviewed',
+					'valueType':'static'
+					'valueSource':1
+				},
+
+   			passDict
+	  			recordId
+	  			selectedValue
+		"""
+		
+		# --- assign parameters
+		
+		df = self.appDf
+		
+		#df.head()
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+		
+		column = args['column']
+		
+		passDict = kwargs['passDict']
+		recordIndex = passDict['recordId']
+		value = passDict['selectedValue']
+
+		# --- operations
+
+		if args['valueSource'] == 'passValue':
+			print('valueSource passValue')
+			df.loc[recordIndex, column] = value
+		elif args['valueSource'] == 'today':
+			print('valueSource today')
+			df.loc[recordIndex, column] = date.today().strftime("%m/%d/%Y")
+		elif args['valueSource'] == 'static':
+			print('valueSource static')
+			cellValue = args['value']
+			df.loc[recordIndex, column] = cellValue
+		
+		print(df.loc[recordIndex])
+		
+		# --- 
+		
+		self.appDf = df
+		passDict = kwargs['passDict']
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
+		
+	## END method ----------------------
+
+	def updateTable(self,**kwargs):	
+		print(f'updateTable()')
+
+		"""
+  			'updateTable': {
+						'filename':self.filename,
+						'tableHeaderDf':self.tableHeaderDf
+					},
+		"""
+		
+		# --- assign parameters
+		
+		df = self.appDf
+		
+		#df.head()
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+		
+		filename = args['filename']
+
+		# --- operations
+
+		print(df.info())
+
+		headersArray = self.getTableDefaultHeaders()
+		self.writeTableDftoFile(filename,df,self.tableHeaderDf)
+
+		# --- 
+		
+		passDict = kwargs['passDict']
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
+		
+	## END method ----------------------
+
+
+
+	
+	def reloadTable(self,**kwargs):	
+		print(f'reloadTable()')
+
+		"""
+  			'reloadTable': {
+						'filename':self.filename
+					},
+		"""
+		
+		# --- assign parameters
+		
+		df = self.appDf
+		
+		#df.head()
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+
+		# --- operations
+		
+		fileName, df, dfHeaders = self.loadTableToDf(args['filename'])
+
+		# --- 
+		
+		passDict = kwargs['passDict']
+		
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		
+		return returnDict
+		
+	## END method ----------------------
 
 
 
@@ -1378,7 +1633,6 @@ class Core:
 			}
 		"""
 
-		df = self.appDf
 
 		args = kwargs['args']
 		print(json.dumps(args, indent=2))
@@ -1392,12 +1646,14 @@ class Core:
 		if args['returnType'] == 'int':
 			print('is int')
 			value = int(input(messagePrompt))
+		elif args['returnType'] == 'str':
+			print('is str')
+			value = input(messagePrompt)
 
 		print(type(value))
 
 		# --- 
 
-		self.appDf = df
 		
 		passDict = kwargs['passDict']
 		print(json.dumps(passDict, indent=2))
@@ -1427,25 +1683,47 @@ class Core:
 
 		"""
 		  	'getListofUniques': {
+				'dataStructure':'table'
+				'tableName':'transactions'
+				'phase':'source'
 				'column':'Expense'
-			}
-		"""
+			},
 
-		df = self.appDf
+   			dataStrucures 
+	  			table/picklist/records
+	  			table - tableName, phase, column
+	  			picklist - setting/object
+	  			records - tablename
+		"""
+		df = pd.DataFrame()
 
 		args = kwargs['args']
 		print(json.dumps(args, indent=2))
 
+		if args['dataStructure'] == 'table':
+			print('dataStructure = table')
+			if args['phase'] == 'source':
+				print('phase = source')
+				fileName, df, dfHeaders = self.loadTableToDf(args['tableName'])
+				self.headersDf = dfHeaders
+			elif args['phase'] == 'transform':
+				print('phase = transform')
+				df = self.appDf
+		elif args['dataStructure'] == 'str':
+			df = self.appDf
+
+		print(df.head())
+		
 		column = args['column']
 		
 		# --- operations
 		
-		expenseList = pd.Series(df[column].unique())
+		optionList = pd.Series(df[column].unique())
 
-		expenseList = expenseList.drop_duplicates()
-		expenseList = expenseList.dropna()
-		expenseList.index = range(0, len(expenseList))
-		print(expenseList)
+		optionList = optionList.drop_duplicates()
+		optionList = optionList.dropna()
+		optionList.index = range(0, len(optionList))
+		print(optionList)
 
 		# --- 
 
@@ -1454,7 +1732,7 @@ class Core:
 		passDict = kwargs['passDict']
 		# build returnDict
 		returnDict = {}
-		passDict['list'] = expenseList.to_json()
+		passDict['optionList'] = optionList.to_json()
 
 		#returnDict['df'] = df
 		returnDict['passDict'] = passDict
@@ -1464,6 +1742,50 @@ class Core:
 		
 	## END method ----------------------
 
+	
+	def getSelectedOptionFromList(self,**kwargs):	
+		print(f'getSelectedOptionFromList()')
+
+		"""
+			'getSelectedOptionFromList': {
+			}
+		"""
+
+		args = kwargs['args']
+		print(json.dumps(args, indent=2))
+		
+		#column = args['optionList'].read_json()
+		#optionList = json.loads(args['optionList'])
+		passDict = kwargs['passDict']
+		listJson = passDict['optionList']
+		optionList = pd.read_json(listJson, typ='series', orient='records')
+		print(optionList)
+
+		optionIndex = passDict['optionIndex']
+		
+		
+		# --- operations
+		
+		selectedValue = optionList[optionIndex]
+		print(f'selectedValue - {selectedValue}')
+
+		# --- 
+
+		
+		passDict = kwargs['passDict']
+		# build returnDict
+		returnDict = {}
+		passDict['selectedValue'] = selectedValue
+
+		#returnDict['df'] = df
+		returnDict['passDict'] = passDict
+		print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+	
 	
 	
 	def printOptionsList(self,**kwargs):	
@@ -1480,7 +1802,7 @@ class Core:
 		print(json.dumps(args, indent=2))
 
 		passDict = kwargs['passDict']
-		listJson = passDict['list']
+		listJson = passDict['optionList']
 		list = pd.read_json(listJson, typ='series', orient='records')
 		
 		# --- operations
@@ -1504,6 +1826,45 @@ class Core:
 
 
 	
+
+	
+
+	def printMetric(self,**kwargs):	
+		print(f'printMetric()')
+
+		"""
+		  	'printMetric': {
+				'message':'Sum total: ',
+				'totalName':'total'
+			}
+		"""
+
+		df = self.appDf
+
+		args = kwargs['args']
+		passDict = kwargs['passDict']
+		print(json.dumps(args, indent=2))
+		
+		message = args['message']
+		totalName = passDict['totalName']
+		
+		# --- operations
+		
+		print(f'{message} {totalName}')
+			
+		# --- 
+
+		# build returnDict
+		returnDict = {}
+		returnDict['passDict'] = passDict
+		#print(json.dumps(returnDict, indent=2))
+		
+		return returnDict
+		
+	## END method ----------------------
+
+		
+	
 	def printReportTable(self,**kwargs):	
 		print(f'printReportTable()')
 
@@ -1518,15 +1879,30 @@ class Core:
 		args = kwargs['args']
 		print(json.dumps(args, indent=2))
 
-		headerSet = args['headerSet']
+		headerSet = ''
+
+		
+		try:
+			args['headerSet']
+			headerSet = args['headerSet']
+			
+		except KeyError as error:
+			print('no default')
 		
 		# --- operations
 		
-		headersArray = self.getTableDefaultHeaders()
-		print(headersArray)
-
-		# print report talbe
-		UI.printFormattedTable(self,df,headersArray)
+		if headerSet == 'default':
+			print('headerSet = default')
+			
+			headersArray = self.getTableDefaultHeaders()
+			print(headersArray)
+	
+			# print report talbe
+			UI.printFormattedTable(self,df,headersArray)
+		
+		else:
+			print(df)
+			
 		
 		# --- 
 
