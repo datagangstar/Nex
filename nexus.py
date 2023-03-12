@@ -460,7 +460,7 @@ class Core:
 		#print('\n')
 		print('formatTableColumn()')
 		#print(row.dtypes)
-		#print(row['name'])
+		print(row['name'])
 		#print(row['dtype'])
 
 		df = self.tableDf
@@ -474,14 +474,14 @@ class Core:
 
 		# if 
 		if dtype == 'datetime64':
-			#print('format to datetime')
+			print('format to datetime')
 			df[colName] = pd.to_datetime(df[colName])
 		elif  dtype == 'str':
-			#print('format to str')
+			print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
 			df[colName] = df[colName].astype(str)
 		elif  dtype == 'int':
-			#print('format to int')
+			print('format to int')
 			df[colName] = df[colName].astype(str)
 			df[colName] = df[colName].replace('','0')
 			df[colName] = df[colName].replace('True', '1')
@@ -492,7 +492,7 @@ class Core:
 			#df[colName] = pd.to_numeric(df[colName])
 			df[colName] = df[colName].astype(int)
 		elif  dtype == 'number':
-			#print('format to number')
+			print('format to number')
 			#df[colName] = pd.to_datetime(df[colName])
 			#df[colName] = df[colName].astype(str)
 			df[colName] = pd.to_numeric(df[colName])
@@ -1872,6 +1872,11 @@ class Core:
 		  	'printReportTable': {
 					'headerSet':'default'
 				}
+
+ 			'printReportTable': {
+						'headerSet':'custom',
+						'headers':''
+					}
 		"""
 
 		df = self.appDf

@@ -200,29 +200,29 @@ class Finances(Application):
 		print(df.info())
 
 		
-		for index, row in headersDf.iterrows():
-			#print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
+		# for index, row in headersDf.iterrows():
+		# 	#print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
 
-			dtype = row["dtype"]
-			name = row["name"]
+		# 	dtype = row["dtype"]
+		# 	name = row["name"]
 			
-			if dtype == 'datetime64':
-				#print('--- datetime64')
-				df[name]= pd.to_datetime(df[name])
+		# 	if dtype == 'datetime64':
+		# 		#print('--- datetime64')
+		# 		df[name]= pd.to_datetime(df[name])
 
-			elif dtype == 'int':
-				#print("int")
-				df[name] = df[name].astype('int')
+		# 	elif dtype == 'int':
+		# 		#print("int")
+		# 		df[name] = df[name].astype('int')
 				
-			elif dtype == 'float':
-				#print("float")
-				df[name] = df[name].astype('float')
+		# 	elif dtype == 'float':
+		# 		#print("float")
+		# 		df[name] = df[name].astype('float')
 				
-			elif dtype == 'str':
-				#print("str")
-				df[name] = df[name].astype('str')
-			else:
-				print("object")
+		# 	elif dtype == 'str':
+		# 		#print("str")
+		# 		df[name] = df[name].astype('str')
+		# 	else:
+		# 		print("object")
 				
 		#print(df.info())
 
@@ -508,8 +508,7 @@ class Finances(Application):
 				},
 				{
 					'printReportTable': {
-						'headerSet':'custom',
-						'headers':''
+						'headerSet':'default'
 					}
 				},
 				{
@@ -753,7 +752,7 @@ class Finances(Application):
 		
 		df = self.tableDf
 
-		filterDate = '2023-02'
+		filterDate = '2023-03'
 		
 		# --- STEP
 		
@@ -778,7 +777,7 @@ class Finances(Application):
 			'Parking':0,
 			'Coffee':150,
 			'Yoga':128,
-			'Utilities':30,
+			'Utilities':50,
 			'Gasoline':150,
 			'Groceries':350,
 			'Laundry':20,
@@ -787,7 +786,8 @@ class Finances(Application):
 			'Home':50,
 			'Supplies':30,
 			'Utilities':30,
-			'Housing':1630
+			'Housing':1630,
+			'Travel':250
 		}
 		print(json.dumps(budgetDict, indent=2))
 
@@ -1538,25 +1538,67 @@ class Taxes(Application):
 	def __init__(self,core):
 		print('__init__Taxes()')
 
+		self.appName = 'Taxes'
+		self.tableName = 'taxes2022'
+
 		self.core = core
 		
 		# init app parent
 		super().__init__()
 		
-
-		filename,df,headersDf = core.loadTableToDf('taxes2022')
+		# --- STEP
 		
+		filename,df,headersDf = core.loadTableToDf(self.tableName)
 		self.filename = filename
-		self.tableDf = super().formatTable(df,headersDf)
+		self.tableDf = df
 		self.tableHeaderDf = headersDf
+		print(df.info())
 
-		self.appMethods = pd.Series([
-			'setup',
-			'selectYear',
-			'viewTable',
-			'viewReport',
-			'totalIncome',
-		])
+
+		# filename,df,headersDf = core.loadTableToDf('taxes2022')
+		
+		# self.filename = filename
+		# self.tableDf = super().formatTable(df,headersDf)
+		# self.tableHeaderDf = headersDf
+
+
+		
+		# --- STEP
+		
+		args = {
+			'base': 'applications',
+			'appName': self.appName,
+			'type': 'features'
+		}
+		featureDict = self.core.readDictFromFile(args=args)
+		print(json.dumps(featureDict, indent=2))
+
+		# self.appMethods = pd.Series([
+		# 	'setup',
+		# 	'selectYear',
+		# 	'viewTable',
+		# 	'viewReport',
+		# 	'totalIncome',
+		# ])
+
+		featureDf = pd.DataFrame()
+		for feature, value in featureDict.items():
+			#print(feature)
+			rowDf = pd.Series([feature])
+			featureDf = pd.concat([featureDf, rowDf], ignore_index=True)
+
+		self.appMethods = featureDf[0].squeeze()
+
+		
+		# --- STEP
+		
+		args = {
+			'appName': self.appName
+		}
+		print(json.dumps(args, indent=2))
+		self.settingsDict = self.core.readDictFromFile(args=args)
+		print(json.dumps(self.settingsDict, indent=2))
+		
 		
 		
 		# optionsList = self.appMethods
@@ -1578,8 +1620,9 @@ class Taxes(Application):
 		# - metrics
 		# - methods list
 		# - 
+
 		
-		
+
 
 		
 	## END INIT method ----------------------
@@ -1645,9 +1688,33 @@ class Taxes(Application):
 		
 		
 
-		df = self.core.execAppFeatureOperations(args)
-		print(df)
+		#df = self.core.execAppFeatureOperations(args)
+		#print(df)
 
+		
+		argsDict = {
+			'operations': [
+				{
+					'filterBy': {
+						'column':'Expense',
+						'value':'Donation'
+					}
+				},
+				{
+					'sum': {
+						'groupColumn':'Expense',
+						'targetColumn':'Amount'
+					}
+				}
+			]
+		}
+		
+		
+
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
+		
 	## END method ----------------------
 		
 		
@@ -1680,9 +1747,10 @@ class Taxes(Application):
 
 	## END method ----------------------
 		
-	def totalIncome(self,df):
+	def totalIncome(self):
 		print('totalIncome()')
 
+		df = self.tableDf
 		
 		df = df.loc[df['Reviewed'] == 1]
 		df = df.loc[df['Expense'] == "Income"]
@@ -1700,7 +1768,7 @@ class Taxes(Application):
 		# save this as a metric in the app, make accessable by other other apps
 		codeStr = """print(df.groupby('Account')['Amount'].sum())"""
   			
-		exec(codeStr)
+		#exec(codeStr)
 
 		# name, df, grouping column, target column, method
 		params = {
