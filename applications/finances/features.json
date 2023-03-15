@@ -12,6 +12,7 @@
 	"sumByAccount":{},
 	"tagRecurring":{},
 	"sumRecurring":{},
+	"sumFixed":{},
 	"checkBudgetByFixedVariable":{},
 	"NAupdateStatus":{},
 	"PRIVATEperformImport":{}

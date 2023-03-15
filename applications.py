@@ -1063,8 +1063,46 @@ class Finances(Application):
 	def tagRecurring(self):
 		print('tagRecurring()')
 
-		
 		df = self.tableDf
+		
+		argsDict = {
+			'operations': [
+				{
+					'filterColumnByValue': {
+						'column':'Reviewed',
+						'value':1
+					}
+				},
+				{	'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
+				},
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
+				},
+				{
+					'sumDollarByColumn': {
+						'groupColumn':'Account',
+						'targetColumn':'Amount'
+					}
+				},
+				{
+					'printReportTable': {
+					}
+				}
+			]
+		}
+		
+		
+
+		# df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		# #print(df.head())
+		# print(json.dumps(passDict, indent=2))
+
 
 		# app feature operations
 		args = {
@@ -1084,8 +1122,8 @@ class Finances(Application):
 		
 		
 
-		data = self.core.execAppFeatureOperations(args)
-		print(data)
+		# data = self.core.execAppFeatureOperations(args)
+		# print(data)
 		
 
 	## END method ----------------------
@@ -1094,25 +1132,143 @@ class Finances(Application):
 	def sumRecurring(self):
 		print(f'sumRecurring()')
 
+		
 		df = self.tableDf
 		
-		# --- STEP - filter
-		df = df[df['Transaction Date'].dt.strftime('%Y-%m') == '2023-01']
+		argsDict = {
+			'operations': [
+				{	
+					'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
+				},
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
+				},
+				{
+					'filterColumnByValue': {
+						'column':'Recurring',
+						'value':1
+					}
+				},
+				{
+					'sumByColumn': {
+						'targetColumn':'Amount',
+						'totalName':'total'
+					}
+				},
+				{
+					'printMetric': {
+						'message':'Sum total: ',
+						'totalName':'total'
+					}
+				},
+				{
+					'sumDollarByColumn': {
+						'groupColumn':'Description',
+						'targetColumn':'Amount'
+					}
+				},
+				{
+					'printReportTable': {
+					}
+				}
+			]
+		}
+		
+		
+
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
+
 		
 		# --- STEP - filter
-		df = df.loc[df['Recurring'] == 1]
+		#df = df[df['Transaction Date'].dt.strftime('%Y-%m') == '2023-01']
+		
+		# --- STEP - filter
+		#df = df.loc[df['Recurring'] == 1]
 		
 		# --- STEP - operation
-		net = df['Amount'].sum()
-		print(f'net: {net}')
+		# net = df['Amount'].sum()
+		# print(f'net: {net}')
 
 		# --- STEP - operation
-		groupDf = df.groupby('Description')['Amount'].sum()
-		print(groupDf)
+		# groupDf = df.groupby('Description')['Amount'].sum()
+		# print(groupDf)
 
 		
 	## END method ----------------------
 
+
+	def sumFixed(self):
+		print(f'sumFixed()')
+
+		
+		df = self.tableDf
+		
+		argsDict = {
+			'operations': [
+				{	
+					'getSettingByName': {
+						'appName':self.appName,
+						'settingName':'dateFilter'
+					}
+				},
+				{
+					'filterByDate': {
+						'column':'Transaction Date',
+						'format':'%Y-%m'
+					}
+				},
+				{
+					'filterColumnByValue': {
+						'column':'Reviewed',
+						'value':1
+					}
+				},
+				{
+					'filterColumnByValue': {
+						'column':'Recurring',
+						'value':0
+					}
+				},
+				{
+					'sumByColumn': {
+						'targetColumn':'Amount',
+						'totalName':'total'
+					}
+				},
+				{
+					'printMetric': {
+						'message':'Sum total: ',
+						'totalName':'total'
+					}
+				},
+				{
+					'sumDollarByColumn': {
+						'groupColumn':'Description',
+						'targetColumn':'Amount'
+					}
+				},
+				{
+					'printReportTable': {
+					}
+				}
+			]
+		}
+		
+		
+
+		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		#print(df.head())
+		print(json.dumps(passDict, indent=2))
+		
+	## END method ----------------------
 
 		
 	def updateStatus(self):
