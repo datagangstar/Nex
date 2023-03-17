@@ -6,6 +6,8 @@ from tabulate import tabulate # printing tables
 import json
 import numpy as np
 
+import yfinance as yahooFinance
+
 
 # get list of class methods
 # https://www.askpython.com/python/examples/find-all-methods-of-class#:~:text=To%20list%20the%20methods%20for%20this%20class%2C%20one%20approach%20is,and%20properties%20of%20the%20class.
@@ -92,6 +94,142 @@ class Application:
 ## END Taxes Class ======
 
 
+
+class stocks(Application):
+	
+	"""Code Summary
+		check for required tables
+ 		create tables if need
+   	
+	"""
+	def __init__(self,core):
+		print('__init__Stocks()')
+
+		self.appName = 'stocks'
+		self.tableName = 'stocks'
+
+		self.core = core
+
+		# init app parent
+		super().__init__()
+
+		
+		# --- STEP
+		
+		filename,df,headersDf = core.loadTableToDf(self.tableName)
+		self.filename = filename
+		#self.df = df
+		self.tableDf = df
+		#self.headersDf = headersDf
+		self.tableHeaderDf = headersDf
+		print(df.head())
+		print(df.info())
+
+		
+		# --- STEP
+		
+		args = {
+			'base': 'applications',
+			'appName': self.appName,
+			'type': 'features'
+		}
+		featureDict = self.core.readDictFromFile(args=args)
+		print(json.dumps(featureDict, indent=2))
+
+		# self.appMethods = pd.Series([
+		# 	'setup',
+		# 	'selectYear',
+		# 	'viewTable',
+		# 	'viewReport',
+		# 	'totalIncome',
+		# ])
+
+		featureDf = pd.DataFrame()
+		for feature, value in featureDict.items():
+			#print(feature)
+			rowDf = pd.Series([feature])
+			featureDf = pd.concat([featureDf, rowDf], ignore_index=True)
+
+		self.appMethods = featureDf[0].squeeze()
+
+		
+		# --- STEP
+		
+		args = {
+			'appName': self.appName
+		}
+		print(json.dumps(args, indent=2))
+		self.settingsDict = self.core.readDictFromFile(args=args)
+		print(json.dumps(self.settingsDict, indent=2))
+		
+		
+		
+	## END INIT method ----------------------
+
+	
+	def viewStocks(self):
+		print('viewStocks()')
+		
+		# get default table columns and print formatted table
+		#self.printFormattedTable(df,self.getTableDefaultHeaders())
+
+		df = self.tableDf
+		
+		UI = self.core.UI
+		UI.printFormattedTable(self,df,self.core.getTableDefaultHeaders())
+
+	## END method ----------------------
+
+	
+	def reportPositionValue(self):
+		print('viewStocks()')
+
+		df = self.tableDf
+		# --- copy df
+		reportDf = df.copy()
+		print(reportDf)
+
+		# --- add report columns
+		reportDf['price'] = pd.to_numeric(0)
+		reportDf['Mkt Value'] = pd.to_numeric(0)
+		#print(reportDf.head())
+
+		# get price from yahoo
+		reportDf['price'] = reportDf.apply(self.getPricebySymbol, axis=1)
+
+		# calculate market value
+		reportDf['Mkt Value'] = np.multiply(pd.to_numeric(reportDf["qty"]), reportDf['price'])
+		
+		# -- print report
+		self.printFormattedTable(reportDf,['symbol','qty','price','Mkt Value'])
+
+		# -- calculate metric
+		positionTotalValue = reportDf["Mkt Value"].sum()
+		print(f'Total Mkt Value: {positionTotalValue}')
+
+	## END method ----------------------
+
+	def getPricebySymbol(self,row):
+		#print(f'{row.name}: {row["symbol"]}')
+	
+		column = 'symbol'
+		tickerObject = yahooFinance.Ticker(row[column])
+		
+		# display Company current price
+		dictKey = 'currentPrice'
+		price = pd.to_numeric(tickerObject.info[dictKey])
+	
+		return price
+	
+		## END method ----------------------
+		
+		
+## END Donations Class ======
+
+
+
+
+	
 
 class Donations(Application):
 	

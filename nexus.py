@@ -12,6 +12,7 @@ import numpy as np
 from applications import Donations
 from applications import Finances
 from applications import Taxes
+from applications import stocks
 
 
 
