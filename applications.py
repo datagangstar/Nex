@@ -6,6 +6,7 @@ from tabulate import tabulate # printing tables
 import json
 import numpy as np
 
+# https://www.qmr.ai/yfinance-library-the-definitive-guide/
 import yfinance as yahooFinance
 
 
@@ -197,13 +198,14 @@ class stocks(Application):
 		# get price from yahoo
 		reportDf['price'] = reportDf.apply(self.getPricebySymbol, axis=1)
 
-		# calculate market value
+		# # calculate market value
 		reportDf['Mkt Value'] = np.multiply(pd.to_numeric(reportDf["qty"]), reportDf['price'])
 		
-		# -- print report
-		self.printFormattedTable(reportDf,['symbol','qty','price','Mkt Value'])
+		# # -- print report
+		UI = self.core.UI
+		UI.printFormattedTable(self,reportDf,['symbol','qty','price','Mkt Value'])
 
-		# -- calculate metric
+		# # -- calculate metric
 		positionTotalValue = reportDf["Mkt Value"].sum()
 		print(f'Total Mkt Value: {positionTotalValue}')
 
@@ -213,11 +215,17 @@ class stocks(Application):
 		#print(f'{row.name}: {row["symbol"]}')
 	
 		column = 'symbol'
+		print(row[column])
 		tickerObject = yahooFinance.Ticker(row[column])
+		todays_data = tickerObject.history(period='1d')
+		price = todays_data['Close'][0]
+		#print(tickerObject.info)
 		
 		# display Company current price
-		dictKey = 'currentPrice'
-		price = pd.to_numeric(tickerObject.info[dictKey])
+		dictKey = 'close'
+		#price = ''
+		#price = pd.to_numeric(tickerObject.info[dictKey])
+		print(price)
 	
 		return price
 	
