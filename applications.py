@@ -2,108 +2,97 @@ import pandas as pd
 import re
 import uuid
 from datetime import date
-from tabulate import tabulate # printing tables
+from tabulate import tabulate  # printing tables
 import json
 import numpy as np
 
 # https://www.qmr.ai/yfinance-library-the-definitive-guide/
 import yfinance as yahooFinance
 
-
 # get list of class methods
 # https://www.askpython.com/python/examples/find-all-methods-of-class#:~:text=To%20list%20the%20methods%20for%20this%20class%2C%20one%20approach%20is,and%20properties%20of%20the%20class.
 
 
-
 class Application:
-
 	"""Code Summary
 	check for required tables
  		create tables if need
    	
 	"""
-	
+
 	def __init__(self):
 		print('__init__Applications()')
-		
-		
-		self.methods = pd.Series([
-			'back'
-		])
+
+		self.methods = pd.Series(['back'])
 		print(self.methods)
 
 	## END INIT method ----------------------
 
 	# ------ getters & setters
 
-
 	def loadSettings(self):
 		return self.methods
 
 	## END method ----------------------
-	
+
 	def getMethods(self):
 		return self.methods
 
 	## END method ----------------------
 
-		
-	def formatTable(self,df,headersDf):
-		
+	def formatTable(self, df, headersDf):
+
 		for index, row in headersDf.iterrows():
 			print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
 
 			dtype = row["dtype"]
 			name = row["name"]
-			
+
 			if dtype == 'datetime64':
 				print('--- datetime64')
-				df[name]= pd.to_datetime(df[name])
+				df[name] = pd.to_datetime(df[name])
 
 			elif dtype == 'int':
 				print("int")
 				df[name] = df[name].astype('int')
-				
+
 			elif dtype == 'float':
 				print("float")
 				df[name] = df[name].astype('float')
-				
+
 			elif dtype == 'str':
 				print("str")
 				df[name] = df[name].astype('str')
 			else:
 				print("object")
-				
+
 		return df
 
 	## END method ----------------------
 
-
-		
-	def getAppFeature(self,appName):
+	def getAppFeature(self, appName):
 		print(f'__getAppFeature({appName})')
-		
-		 
+
 		return self.core.readDictFromFile({
-			'base': 'applications',
-			'appName': appName,
-			'type': 'features'
+		 'base': 'applications',
+		 'appName': appName,
+		 'type': 'features'
 		})
 
 	## END method ----------------------
-		
+
+
 ## END Taxes Class ======
 
 
-
 class stocks(Application):
-	
 	"""Code Summary
 		check for required tables
  		create tables if need
    	
 	"""
-	def __init__(self,core):
+
+	def __init__(self, core):
 		print('__init__Stocks()')
 
 		self.appName = 'stocks'
@@ -114,10 +103,9 @@ class stocks(Application):
 		# init app parent
 		super().__init__()
 
-		
 		# --- STEP
-		
-		filename,df,headersDf = core.loadTableToDf(self.tableName)
+
+		filename, df, headersDf = core.loadTableToDf(self.tableName)
 		self.filename = filename
 		#self.df = df
 		self.tableDf = df
@@ -126,14 +114,9 @@ class stocks(Application):
 		print(df.head())
 		print(df.info())
 
-		
 		# --- STEP
-		
-		args = {
-			'base': 'applications',
-			'appName': self.appName,
-			'type': 'features'
-		}
+
+		args = {'base': 'applications', 'appName': self.appName, 'type': 'features'}
 		featureDict = self.core.readDictFromFile(args=args)
 		print(json.dumps(featureDict, indent=2))
 
@@ -153,95 +136,149 @@ class stocks(Application):
 
 		self.appMethods = featureDf[0].squeeze()
 
-		
 		# --- STEP
-		
-		args = {
-			'appName': self.appName
-		}
+
+		args = {'appName': self.appName}
 		print(json.dumps(args, indent=2))
 		self.settingsDict = self.core.readDictFromFile(args=args)
 		print(json.dumps(self.settingsDict, indent=2))
-		
-		
-		
+
 	## END INIT method ----------------------
 
-	
 	def viewStocks(self):
 		print('viewStocks()')
-		
+
 		# get default table columns and print formatted table
 		#self.printFormattedTable(df,self.getTableDefaultHeaders())
 
 		df = self.tableDf
+
 		
+		argsDict = {
+		 'operations':
+		 [{
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }
+		  ]
+		}
+
+		# df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
+		# self.tableDf = df
+		# print(json.dumps(passDict, indent=2))
+
 		UI = self.core.UI
-		UI.printFormattedTable(self,df,self.core.getTableDefaultHeaders())
+		UI.printFormattedTable(self, df, self.core.getTableDefaultHeaders())
 
 	## END method ----------------------
 
-	
 	def reportPositionValue(self):
 		print('viewStocks()')
 
 		df = self.tableDf
+
+		
+		argsDict = {
+		 'operations':
+		 [{
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }
+		  ]
+		}
+
+		# df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
+		# self.tableDf = df
+		# print(json.dumps(passDict, indent=2))
+		
+		# --- STEP
+		
 		# --- copy df
 		reportDf = df.copy()
 		print(reportDf)
+
+		
+		# --- STEP - format column
 
 		# --- add report columns
 		reportDf['price'] = pd.to_numeric(0)
 		reportDf['Mkt Value'] = pd.to_numeric(0)
 		#print(reportDf.head())
 
+		
+		# --- STEP - apply function
+
 		# get price from yahoo
 		reportDf['price'] = reportDf.apply(self.getPricebySymbol, axis=1)
 
-		# # calculate market value
-		reportDf['Mkt Value'] = np.multiply(pd.to_numeric(reportDf["qty"]), reportDf['price'])
 		
-		# # -- print report
-		UI = self.core.UI
-		UI.printFormattedTable(self,reportDf,['symbol','qty','price','Mkt Value'])
+		# --- STEP - transform - multiply & new column
+
+		# # calculate market value
+		reportDf['Mkt Value'] = np.multiply(pd.to_numeric(reportDf["qty"]),
+		                                    reportDf['price'])
+
+		
+		# --- STEP - calc metric 
 
 		# # -- calculate metric
 		positionTotalValue = reportDf["Mkt Value"].sum()
 		print(f'Total Mkt Value: {positionTotalValue}')
 
+		
+		# --- STEP - print report
+
+		
+		# # -- print report
+		UI = self.core.UI
+		UI.printFormattedTable(self, reportDf,
+		                       ['symbol', 'qty', 'price', 'Mkt Value'])
+
+		
+
 	## END method ----------------------
 
-	def getPricebySymbol(self,row):
+	def getPricebySymbol(self, row):
 		#print(f'{row.name}: {row["symbol"]}')
-	
+
 		column = 'symbol'
 		print(row[column])
 		tickerObject = yahooFinance.Ticker(row[column])
 		todays_data = tickerObject.history(period='1d')
 		price = todays_data['Close'][0]
 		#print(tickerObject.info)
-		
+
 		# display Company current price
 		dictKey = 'close'
 		#price = ''
 		#price = pd.to_numeric(tickerObject.info[dictKey])
 		print(price)
-	
+
 		return price
-	
+
 		## END method ----------------------
-		
-		
+
+
 ## END Donations Class ======
 
 
-
-
-	
-
 class Donations(Application):
-	
-	def __init__(self,core):
+
+	def __init__(self, core):
 		print('__init__Donations()')
 
 		self.core = core
@@ -249,22 +286,19 @@ class Donations(Application):
 		# init app parent
 		super().__init__()
 
-		filename,df,headersDf = core.loadTableToDf('transactions')
-		
+		filename, df, headersDf = core.loadTableToDf('transactions')
+
 		self.filename = filename
-		self.tableDf = super().formatTable(df,headersDf)
+		self.tableDf = super().formatTable(df, headersDf)
 		self.tableHeaderDf = headersDf
 
-		methods = pd.Series([
-			'setup'
-		])
-		
+		methods = pd.Series(['setup'])
+
 		# combine parent and app methods
 		self.appMethods = methods
-		
+
 	## END INIT method ----------------------
 
-	
 	def setup(self):
 		print('setup()')
 
@@ -276,54 +310,50 @@ class Donations(Application):
 		filterValue = '2022'
 
 		df = self.tableDf
-		
+
 		# list all donation transactions
 		# sum donation total
 
-		
 		# df = df.loc[df['Expense'] == "Donation"]
-		
+
 		# #df = df[df['Transaction Date'].dt.strftime('%Y') == 2022]
 		# print(df)
 
 		# groupDf = df.groupby('Expense')['Amount'].sum()
 		# print(groupDf)
 
-		
 		args = {
-			'df': self.tableDf,
-			'operations': {
-				'filterBy': {
-					'column':'Expense',
-					'value':'Donation'
-				},
-				#'print':'default', # all, default, []
-				'sum': {
-					'groupColumn':'Expense',
-					'targetColumn':'Amount'
-				}
-			}
+		 'df': self.tableDf,
+		 'operations': {
+		  'filterBy': {
+		   'column': 'Expense',
+		   'value': 'Donation'
+		  },
+		  #'print':'default', # all, default, []
+		  'sum': {
+		   'groupColumn': 'Expense',
+		   'targetColumn': 'Amount'
+		  }
+		 }
 		}
-		
 
 		df = self.core.execAppFeatureOperations(args)
 		print(df)
 
 	## END method ----------------------
 
-		
+
 ## END Donations Class ======
-		
 
 
 class Finances(Application):
-
 	"""Code Summary
 		check for required tables
  		create tables if need
    	
 	"""
-	def __init__(self,core):
+
+	def __init__(self, core):
 		print('__init__Finances()')
 
 		self.appName = 'finances'
@@ -334,10 +364,9 @@ class Finances(Application):
 		# init app parent
 		super().__init__()
 
-		
 		# --- STEP
-		
-		filename,df,headersDf = core.loadTableToDf('transactions')
+
+		filename, df, headersDf = core.loadTableToDf('transactions')
 		self.filename = filename
 		#self.df = df
 		self.tableDf = df
@@ -345,13 +374,12 @@ class Finances(Application):
 		self.tableHeaderDf = headersDf
 		print(df.info())
 
-		
 		# for index, row in headersDf.iterrows():
 		# 	#print(f'idx({index})[{row["dtype"]}] - {row["name"]}')
 
 		# 	dtype = row["dtype"]
 		# 	name = row["name"]
-			
+
 		# 	if dtype == 'datetime64':
 		# 		#print('--- datetime64')
 		# 		df[name]= pd.to_datetime(df[name])
@@ -359,29 +387,23 @@ class Finances(Application):
 		# 	elif dtype == 'int':
 		# 		#print("int")
 		# 		df[name] = df[name].astype('int')
-				
+
 		# 	elif dtype == 'float':
 		# 		#print("float")
 		# 		df[name] = df[name].astype('float')
-				
+
 		# 	elif dtype == 'str':
 		# 		#print("str")
 		# 		df[name] = df[name].astype('str')
 		# 	else:
 		# 		print("object")
-				
+
 		#print(df.info())
 
-
-		
 		# --- STEP
-		
+
 		#featureDict = super().getAppFeature(self.appName)
-		args = {
-			'base': 'applications',
-			'appName': self.appName,
-			'type': 'features'
-		}
+		args = {'base': 'applications', 'appName': self.appName, 'type': 'features'}
 		#print(json.dumps(args, indent=2))
 		featureDict = self.core.readDictFromFile(args=args)
 		#print(json.dumps(featureDict, indent=2))
@@ -393,15 +415,14 @@ class Finances(Application):
 			featureDf = pd.concat([featureDf, rowDf], ignore_index=True)
 
 		#print(featureDf)
-			
-		
+
 		# methods = pd.Series([
-		# 	'sumGroup', 
+		# 	'sumGroup',
 		# 	'sumRecurring',
-		# 	'NAupdateStatus', 
-		# 	'sumTotal', 
-		# 	'viewTrans', 
-		# 	'reviewItem', 
+		# 	'NAupdateStatus',
+		# 	'sumTotal',
+		# 	'viewTrans',
+		# 	'reviewItem',
 		# 	'filterDateRange',
 		# 	'checkBudget',
 		# 	'creditImportMacroAmazon',
@@ -414,26 +435,22 @@ class Finances(Application):
 
 		self.appMethods = featureDf[0].squeeze()
 
-		
 		# --- STEP
-		
+
 		#self.settingsDict = {}
-		
-		args = {
-			'appName': self.appName
-		}
+
+		args = {'appName': self.appName}
 		print(json.dumps(args, indent=2))
 		self.settingsDict = self.core.readDictFromFile(args=args)
 		# obj = self.readDictFromFile(name)
 
-		
 		# --- STEP
 
 		# if len(self.settingsDict) == 0:
 
 		# 	monthTimeDate = date.today().strftime("%Y-%m")
 		# 	print(f'Default Filter Month: {monthTimeDate}')
-			
+
 		# 	#settingsDict = self.settingsDict
 		# 	setting = {"dateFilter": ''}
 		# 	settings = {"settings": setting}
@@ -441,27 +458,26 @@ class Finances(Application):
 		# 	print(settingsDict)
 		# 	self.settingsDict = settingsDict
 		# 	print(self.settingsDict['transactions']['settings']['dateFilter'])
-		# else: 
+		# else:
 		# 	print('settings not empty')
 		# 	print(self.settingsDict)
-		
+
 	## END INIT method ----------------------
-	
+
 	def __repr__(self):
 		cls = type(self)
 		return f"<{cls.__module__}.{cls.__name__} object at {hex(id(self))}>"
-	
+
 	def __str__(self):
 		return self.__repr__()
 
-		
 	# ------ getters & setters
-		
+
 	# getter ------
 	@property
 	def appMethods(self):
 		return self._appMethods
-	
+
 	## END method ----------------------
 
 	# setter
@@ -470,48 +486,40 @@ class Finances(Application):
 		print('appMethods(methods)')
 		self._appMethods = methods
 
-
-
 	def viewTrans(self):
 		print('viewTrans()')
 
 		df = self.tableDf
-		
-		argsDict = {
-			'operations': [
-				{
-					'sortByDate': {
-						'column':'Transaction Date',
-						'ascending':True
-					}
-				},
-				{	'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'printReportTable': {
-						'headerSet':'default'
-					}
-				}
-			]
-		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		argsDict = {
+		 'operations': [{
+		  'sortByDate': {
+		   'column': 'Transaction Date',
+		   'ascending': True
+		  }
+		 }, {
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'printReportTable': {
+		   'headerSet': 'default'
+		  }
+		 }]
+		}
+
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
-		
+
 		# # --- STEP
-		
+
 		# df['Transaction Date'] = pd.to_datetime(df['Transaction Date'])
 		# df = df.sort_values(by='Transaction Date', ascending=True)
 
@@ -523,12 +531,12 @@ class Finances(Application):
 		# }
 		# print(json.dumps(args, indent=2))
 		# settingsDict = self.core.readDictFromFile(args=args)
-		
+
 		# filterDate = settingsDict['settings']['dateFilter']
 		# #print(bool(filterDate))
-		
+
 		# # --- STEP
-		
+
 		# if bool(filterDate):
 		# 	df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 		# 	print(f'Filter Month: {filterDate}')
@@ -537,9 +545,8 @@ class Finances(Application):
 
 		# print('------')
 
-		
 		# --- STEP
-		
+
 		# get report table columns
 		# headersArray = [
 		#  'Amount', 'Description', 'Expense', 'Transaction Date', 'Reviewed', 'Card'
@@ -547,7 +554,6 @@ class Finances(Application):
 		# headersArray = self.core.getTableDefaultHeaders()
 		# print(headersArray)
 
-		
 		# # print report talbe
 		# UI = self.core.UI
 		# UI.printFormattedTable(self,df,headersArray)
@@ -556,72 +562,56 @@ class Finances(Application):
 
 	## END method ----------------------
 
-
-	
 	def filterDateRange(self):
 		print('filterDateRange()')
 
-		
 		df = self.tableDf
 
 		# app feature operations
-		
+
 		argsDict = {
-			'operations': [
-				{
-					'getSettingsDict': {
-						'appName':self.appName
-					}
-				},
-				{
-					'getUserInput': {
-						'returnType':'str',
-						'message':'Enter filter (2022-XX): ',
-						'valueName':'value'
-					}
-				},
-				{
-					'saveSetting': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				}	
-			]
+		 'operations': [{
+		  'getSettingsDict': {
+		   'appName': self.appName
+		  }
+		 }, {
+		  'getUserInput': {
+		   'returnType': 'str',
+		   'message': 'Enter filter (2022-XX): ',
+		   'valueName': 'value'
+		  }
+		 }, {
+		  'saveSetting': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }]
 		}
 
-		
-		
-
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
-		
 
-		
 		# # --- STEP
 		# settingsDict = self.core.readDictFromFile(self.appName)
 
 		# #settingsDict = self.settingsDict
 		# print(settingsDict)
-		
+
 		# --- STEP
-		
+
 		# messagePrompt = f'Enter filter (2022-XX): '
 		# value = input(messagePrompt)
-		
+
 		# # --- STEP
 		# settingsDict['settings']['dateFilter'] = value
 		# print(settingsDict)
 		# self.core.writeDictToFile(self.appName,settingsDict)
-		
+
 		# # --- STEP
 		# self.settingsDict = settingsDict
 
-
-
 	## END method ----------------------
-
-
 
 	def reviewItem(self):
 		print('reviewItem()')
@@ -629,113 +619,92 @@ class Finances(Application):
 		df = self.tableDf
 		UI = self.core.UI
 
-		
-		
-		
 		argsDict = {
-			'operations': [
-				{
-					'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'sortByDate': {
-						'column':'Transaction Date',
-						'ascending':True
-					}
-				},
-				{
-					'printReportTable': {
-						'headerSet':'default'
-					}
-				},
-				{
-					'getUserInput': {
-						'returnType':'int',
-						'message':'Select Record: ',
-						'valueName':'recordId'
-					}
-				},
-				{
-					'getListofUniques': {
-						'dataStructure':'table',
-						'tableName':'transactions',
-						'phase':'source',
-						'column':'Expense'
-					}
-				},
-				{
-					'printOptionsList': {
-					}
-				},
-				{
-					'getUserInput': {
-						'returnType':'int',
-						'message':'Select Expense option: ',
-						'valueName':'optionIndex'
-					}
-				},
-				{
-					'getSelectedOptionFromList': {
-					}
-				},
-				{
-					'updateCellValue': {
-						'column':'Expense',
-						'valueSource':'passValue'
-					},
-				},
-				{
-					'updateCellValue': {
-						'column':'modified',
-						'valueSource':'today'
-					},
-				},
-				{
-					'updateCellValue': {
-						'column':'Reviewed',
-						'valueSource':'static',
-						'value':1
-					},
-				},
-				{
-					'updateCellValue': {
-						'column':'Reviewed',
-						'valueSource':'static',
-						'value':1
-					},
-				},
-				{
-					'updateTable': {
-						'filename':self.filename
-					},
-				}
-				# },
-				# {
-				# 	'reloadTable': {
-				# 		'filename':self.tableName
-				# 	},
-				# }
-			]
+		 'operations':
+		 [{
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'sortByDate': {
+		   'column': 'Transaction Date',
+		   'ascending': True
+		  }
+		 }, {
+		  'printReportTable': {
+		   'headerSet': 'default'
+		  }
+		 }, {
+		  'getUserInput': {
+		   'returnType': 'int',
+		   'message': 'Select Record: ',
+		   'valueName': 'recordId'
+		  }
+		 }, {
+		  'getListofUniques': {
+		   'dataStructure': 'table',
+		   'tableName': 'transactions',
+		   'phase': 'source',
+		   'column': 'Expense'
+		  }
+		 }, {
+		  'printOptionsList': {}
+		 }, {
+		  'getUserInput': {
+		   'returnType': 'int',
+		   'message': 'Select Expense option: ',
+		   'valueName': 'optionIndex'
+		  }
+		 }, {
+		  'getSelectedOptionFromList': {}
+		 }, {
+		  'updateCellValue': {
+		   'column': 'Expense',
+		   'valueSource': 'passValue'
+		  },
+		 },
+		  {
+		   'updateCellValue': {
+		    'column': 'modified',
+		    'valueSource': 'today'
+		   },
+		  }, {
+		   'updateCellValue': {
+		    'column': 'Reviewed',
+		    'valueSource': 'static',
+		    'value': 1
+		   },
+		  }, {
+		   'updateCellValue': {
+		    'column': 'Reviewed',
+		    'valueSource': 'static',
+		    'value': 1
+		   },
+		  }, {
+		   'updateTable': {
+		    'filename': self.filename
+		   },
+		  }
+		  # },
+		  # {
+		  # 	'reloadTable': {
+		  # 		'filename':self.tableName
+		  # 	},
+		  # }
+		  ]
 		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		self.tableDf = df
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
 
-		
-		
 		# --- STEP
 
 		# # filter by selected MONTH
@@ -748,7 +717,7 @@ class Finances(Application):
 		# #print(bool(filterDate))
 
 		# # --- STEP
-		
+
 		# args = {
 		# 	'operations': {
 		# 		'getSettingsDict': {
@@ -762,15 +731,11 @@ class Finances(Application):
 		# 		}
 		# 	}
 		# }
-		
-		
 
 		#data = self.core.execAppFeatureOperations(args) print(data)
 
-
 		# --- STEP
-		
-		
+
 		# if bool(filterDate):
 		# 	# do not save the report df
 		# 	reportDf = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
@@ -781,43 +746,36 @@ class Finances(Application):
 
 		# print('------')
 
-		
 		# # --- STEP
 
-		
-		# # sort report 
+		# # sort report
 		# reportDf = reportDf.sort_values(by='Transaction Date', ascending=True)
-		
-		
+
 		# --- STEP
 
-		
 		# headersArray = [
-		# 	"Description", 
-		# 	"Account", 
-		# 	"Expense", 
+		# 	"Description",
+		# 	"Account",
+		# 	"Expense",
 		# 	"Transaction Date",
-		# 	"Amount", 
+		# 	"Amount",
 		# 	"Reviewed"
 		# ]
 		# #print(tabulate(reportDf[headersArray], headersArray, tablefmt='psql'))
-		
+
 		# UI.printFormattedTable(self,reportDf,headersArray)
 		# #print(df.info())
 
-		
 		# --- STEP
 
-		
 		# # select index
 		# messagePrompt = f'select record: '
 		# recordIndex = int(input(messagePrompt))
 
 		# print(df.loc[recordIndex])
 
-		
 		# --- STEP
-		
+
 		#
 		# expenseUniques = pd.Series(df['Expense'].unique())
 		# #print(expenseUniques)
@@ -847,10 +805,8 @@ class Finances(Application):
 		# for idx, x in enumerate(actionOptions):
 		# 	print(f'{idx}: {x}')
 
-			
 		# # --- STEP
 
-			
 		# messagePrompt = f'select Expense type: '
 		# actionIndex = int(input(messagePrompt))
 
@@ -881,59 +837,55 @@ class Finances(Application):
 		# df.loc[recordIndex, 'Reviewed'] = 1
 		# print(df.loc[recordIndex])
 
-		
 		# --- STEP
 
-		
 		# write new df to file
 		#self.core.writeTableDftoFile(self.filename,df,self.tableHeaderDf)
 
 	## END method ----------------------
 
-
 	def checkBudget(self):
 		print('checkBudget()')
-		
+
 		# --- STEP
-		
+
 		df = self.tableDf
 
 		filterDate = '2023-03'
-		
+
 		# --- STEP
-		
+
 		df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 		df = df.loc[df['Reviewed'] == 1]
-		
+
 		# --- STEP
-		
+
 		headersArray = self.core.getTableDefaultHeaders()
 		print(headersArray)
 
 		# print report talbe
 		UI = self.core.UI
-		UI.printFormattedTable(self,df,headersArray)
+		UI.printFormattedTable(self, df, headersArray)
 
-		
 		# --- STEP
-		
+
 		budgetDict = {
-			'Eating Out':200,
-			'Entertainment':100,
-			'Parking':0,
-			'Coffee':150,
-			'Yoga':128,
-			'Utilities':50,
-			'Gasoline':150,
-			'Groceries':350,
-			'Laundry':20,
-			'Services':30,
-			'Haircut':55,
-			'Home':50,
-			'Supplies':30,
-			'Utilities':30,
-			'Housing':1630,
-			'Travel':250
+		 'Eating Out': 200,
+		 'Entertainment': 100,
+		 'Parking': 0,
+		 'Coffee': 150,
+		 'Yoga': 128,
+		 'Utilities': 50,
+		 'Gasoline': 150,
+		 'Groceries': 350,
+		 'Laundry': 20,
+		 'Services': 30,
+		 'Haircut': 55,
+		 'Home': 50,
+		 'Supplies': 30,
+		 'Utilities': 30,
+		 'Housing': 1630,
+		 'Travel': 250
 		}
 		print(json.dumps(budgetDict, indent=2))
 
@@ -941,121 +893,94 @@ class Finances(Application):
 		budgetDf = budgetDf.set_index(0)
 		print(budgetDf)
 
-		
 		# --- STEP
 
-		
 		#set type to float
 		#df['Amount'] = pd.to_numeric(df['Amount'])
-		
+
 		groupDf = df.groupby('Expense')['Amount'].sum()
 		groupDf.to_frame()
 		print(groupDf)
-			
+
 		total = df['Amount'].sum()
 		print(f'Total: {total}')
 
-		
 		# --- STEP
 		df3 = pd.merge(budgetDf, groupDf, left_index=True, right_index=True)
 
 		df3 = df3.rename(columns={df3.columns[0]: 'budget'})
-		
+
 		#print(df3)
-		
+
 		# --- STEP
 		df3 = df3.assign(remaining=lambda x: x.budget + x.Amount)
-		
+
 		# --- STEP
-		
+
 		#budgetDf.join(groupDf)
 		print(df3)
-		
+
 		# --- STEP
 		net = df3['remaining'].sum()
 		print(f'net: {net}')
 
 	## END method ----------------------
 
-
-		
 	def sumGroup(self):
 		print(f'sumGroup()')
 
 		df = self.tableDf
-				
-		argsDict = {
-			'operations': [
-				{
-					'filterColumnByValue': {
-						'column':'Reviewed',
-						'value':1
-					}
-				},
-				{	'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'sumByColumn': {
-						'targetColumn':'Amount',
-						'totalName':'total'
-					}
-				},
-				{
-					'printMetric': {
-						'message':'Sum total: ',
-						'totalName':'total'
-					}
-				},
-				{
-					'sumDollarByColumn': {
-						'groupColumn':'Expense',
-						'targetColumn':'Amount'
-					}
-				},
-				{
-					'printReportTable': {
-					}
-				}
-			]
-		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		argsDict = {
+		 'operations': [{
+		  'filterColumnByValue': {
+		   'column': 'Reviewed',
+		   'value': 1
+		  }
+		 }, {
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'sumByColumn': {
+		   'targetColumn': 'Amount',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'printMetric': {
+		   'message': 'Sum total: ',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'sumDollarByColumn': {
+		   'groupColumn': 'Expense',
+		   'targetColumn': 'Amount'
+		  }
+		 }, {
+		  'printReportTable': {}
+		 }]
+		}
+
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
 
-
-
-
-
-
-
-
-
-
-
-
 		# --- STEP
-		
-		
+
 		#df = df.loc[df['Reviewed'] == 1]
 
 		# --- STEP
-		
+
 		# filter by selected MONTH
 		#filterDate = self.settingsDict['transactions']['settings']['dateFilter']
 		#df['yearMonth'] = df['Transaction Date'].dt.strftime('%Y-%m')
-		
+
 		# if bool(filterDate):
 		# 	df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
 		# 	print(f'Filter Month: {filterDate}')
@@ -1065,71 +990,59 @@ class Finances(Application):
 		# print('------')
 
 		# --- STEP
-		
+
 		#set type to float
 		#df['Amount'] = pd.to_numeric(df['Amount'])
-		
+
 		# groupDf = df.groupby('Expense')['Amount'].sum()
 		# print(groupDf)
-			
+
 		# --- STEP
-		
+
 		# total = df['Amount'].sum()
 		# print(f'Total: {total}')
 
 	## END method ----------------------
 
-
-		
 	def sumTotal(self):
 		print('sumTotal()')
-		
-		df = self.tableDf
-				
-		argsDict = {
-			'operations': [
-				{
-					'filterColumnByValue': {
-						'column':'Reviewed',
-						'value':1
-					}
-				},
-				{	'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'sumByColumn': {
-						'targetColumn':'Amount',
-						'totalName':'total'
-					}
-				},
-				{
-					'printMetric': {
-						'message':'Sum total: ',
-						'totalName':'total'
-					}
-				}
-			]
-		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		df = self.tableDf
+
+		argsDict = {
+		 'operations': [{
+		  'filterColumnByValue': {
+		   'column': 'Reviewed',
+		   'value': 1
+		  }
+		 }, {
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'sumByColumn': {
+		   'targetColumn': 'Amount',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'printMetric': {
+		   'message': 'Sum total: ',
+		   'totalName': 'total'
+		  }
+		 }]
+		}
+
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
 
-
-
 		# --- STEP
-		
 
 		# print(df.head())
 		# df = df.loc[df['Reviewed'] == 1]
@@ -1137,7 +1050,7 @@ class Finances(Application):
 		# # filter by selected MONTH
 		# filterDate = self.settingsDict['transactions']['settings']['dateFilter']
 		# print(df.head())
-			
+
 		# if bool(filterDate):
 		# 	#df = df[df['yearMonth'] == filterDate]
 		# 	df = df[df['Transaction Date'].dt.strftime('%Y-%m') == filterDate]
@@ -1147,198 +1060,158 @@ class Finances(Application):
 		# 	print('no date filter')
 
 		# print('------')
-			
+
 		# # --- STEP
-			
+
 		# groupDf = df.groupby('Account')['Amount'].sum()
 		# print(groupDf)
 
-
 	## END method ----------------------
 
-
-		
 	def sumByAccount(self):
 		print('sumByAccount()')
 
 		df = self.tableDf
-		
-		argsDict = {
-			'operations': [
-				{
-					'filterColumnByValue': {
-						'column':'Reviewed',
-						'value':1
-					}
-				},
-				{	'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'sumDollarByColumn': {
-						'groupColumn':'Account',
-						'targetColumn':'Amount'
-					}
-				},
-				{
-					'printReportTable': {
-					}
-				}
-			]
-		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		argsDict = {
+		 'operations': [{
+		  'filterColumnByValue': {
+		   'column': 'Reviewed',
+		   'value': 1
+		  }
+		 }, {
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'sumDollarByColumn': {
+		   'groupColumn': 'Account',
+		   'targetColumn': 'Amount'
+		  }
+		 }, {
+		  'printReportTable': {}
+		 }]
+		}
+
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
-		
 
 	## END method ----------------------
 
-
-	
 	def tagRecurring(self):
 		print('tagRecurring()')
 
 		df = self.tableDf
-		
+
 		argsDict = {
-			'operations': [
-				{
-					'filterColumnByValue': {
-						'column':'Reviewed',
-						'value':1
-					}
-				},
-				{	'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'sumDollarByColumn': {
-						'groupColumn':'Account',
-						'targetColumn':'Amount'
-					}
-				},
-				{
-					'printReportTable': {
-					}
-				}
-			]
+		 'operations': [{
+		  'filterColumnByValue': {
+		   'column': 'Reviewed',
+		   'value': 1
+		  }
+		 }, {
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'sumDollarByColumn': {
+		   'groupColumn': 'Account',
+		   'targetColumn': 'Amount'
+		  }
+		 }, {
+		  'printReportTable': {}
+		 }]
 		}
-		
-		
 
 		# df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
 		# #print(df.head())
 		# print(json.dumps(passDict, indent=2))
 
-
 		# app feature operations
 		args = {
-			'df': df,
-			'operations': {
-				'getSettingsDict': {
-					'appName':self.appName
-				},
-				'getUserInput': {
-					'message':'Enter filter (2022-XX): '
-				},
-				'saveSetting': {
-					'settingName':'dateFilter'
-				}
-			}
+		 'df': df,
+		 'operations': {
+		  'getSettingsDict': {
+		   'appName': self.appName
+		  },
+		  'getUserInput': {
+		   'message': 'Enter filter (2022-XX): '
+		  },
+		  'saveSetting': {
+		   'settingName': 'dateFilter'
+		  }
+		 }
 		}
-		
-		
 
 		# data = self.core.execAppFeatureOperations(args)
 		# print(data)
-		
 
 	## END method ----------------------
-		
-		
+
 	def sumRecurring(self):
 		print(f'sumRecurring()')
 
-		
 		df = self.tableDf
-		
-		argsDict = {
-			'operations': [
-				{	
-					'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'filterColumnByValue': {
-						'column':'Recurring',
-						'value':1
-					}
-				},
-				{
-					'sumByColumn': {
-						'targetColumn':'Amount',
-						'totalName':'total'
-					}
-				},
-				{
-					'printMetric': {
-						'message':'Sum total: ',
-						'totalName':'total'
-					}
-				},
-				{
-					'sumDollarByColumn': {
-						'groupColumn':'Description',
-						'targetColumn':'Amount'
-					}
-				},
-				{
-					'printReportTable': {
-					}
-				}
-			]
-		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		argsDict = {
+		 'operations': [{
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'filterColumnByValue': {
+		   'column': 'Recurring',
+		   'value': 1
+		  }
+		 }, {
+		  'sumByColumn': {
+		   'targetColumn': 'Amount',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'printMetric': {
+		   'message': 'Sum total: ',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'sumDollarByColumn': {
+		   'groupColumn': 'Description',
+		   'targetColumn': 'Amount'
+		  }
+		 }, {
+		  'printReportTable': {}
+		 }]
+		}
+
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
 
-		
 		# --- STEP - filter
 		#df = df[df['Transaction Date'].dt.strftime('%Y-%m') == '2023-01']
-		
+
 		# --- STEP - filter
 		#df = df.loc[df['Recurring'] == 1]
-		
+
 		# --- STEP - operation
 		# net = df['Amount'].sum()
 		# print(f'net: {net}')
@@ -1347,123 +1220,112 @@ class Finances(Application):
 		# groupDf = df.groupby('Description')['Amount'].sum()
 		# print(groupDf)
 
-		
 	## END method ----------------------
-
 
 	def sumFixed(self):
 		print(f'sumFixed()')
 
-		
 		df = self.tableDf
-		
-		argsDict = {
-			'operations': [
-				{	
-					'getSettingByName': {
-						'appName':self.appName,
-						'settingName':'dateFilter'
-					}
-				},
-				{
-					'filterByDate': {
-						'column':'Transaction Date',
-						'format':'%Y-%m'
-					}
-				},
-				{
-					'filterColumnByValue': {
-						'column':'Reviewed',
-						'value':1
-					}
-				},
-				{
-					'filterColumnByValue': {
-						'column':'Recurring',
-						'value':0
-					}
-				},
-				{
-					'sumByColumn': {
-						'targetColumn':'Amount',
-						'totalName':'total'
-					}
-				},
-				{
-					'printMetric': {
-						'message':'Sum total: ',
-						'totalName':'total'
-					}
-				},
-				{
-					'sumDollarByColumn': {
-						'groupColumn':'Description',
-						'targetColumn':'Amount'
-					}
-				},
-				{
-					'printReportTable': {
-					}
-				}
-			]
-		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		argsDict = {
+		 'operations': [{
+		  'getSettingByName': {
+		   'appName': self.appName,
+		   'settingName': 'dateFilter'
+		  }
+		 }, {
+		  'filterByDate': {
+		   'column': 'Transaction Date',
+		   'format': '%Y-%m'
+		  }
+		 }, {
+		  'filterColumnByValue': {
+		   'column': 'Reviewed',
+		   'value': 1
+		  }
+		 }, {
+		  'filterColumnByValue': {
+		   'column': 'Recurring',
+		   'value': 0
+		  }
+		 }, {
+		  'sumByColumn': {
+		   'targetColumn': 'Amount',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'printMetric': {
+		   'message': 'Sum total: ',
+		   'totalName': 'total'
+		  }
+		 }, {
+		  'sumDollarByColumn': {
+		   'groupColumn': 'Description',
+		   'targetColumn': 'Amount'
+		  }
+		 }, {
+		  'printReportTable': {}
+		 }]
+		}
+
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
-		
+
 	## END method ----------------------
 
-		
 	def updateStatus(self):
 		print('updateStatus()')
 
 	## END method ----------------------
 
-
-		
-	
-
-	
-
-	
-
-	
 	def creditImportMacroAmazon(self):
 		print('creditImportMacroAmazon()')
 
-		
 		testFilename = 'Chase3439.CSV'
-
 
 		# app feature operations
 		args = {
-			'filename': testFilename,
-			'operations': {
-				'readfile': {
-					'location':'imports',
-					'type':'csv'
-				},
-				'getAppAttr':'importDf',
-				'dropColumn':'Memo',
-				'renameColumn': {
-					'name':'Type',
-					'new':'Kind'
-				},
-				'addColumn':{'column':'Imported','value':''},
-				'addColumn':{'column':'Account','value':''},
-				'addColumn':{'column':'Reviewed','value':''},
-				'addColumn':{'column':'Expense','value':''},
-				'setAppAttr':{'attr':'importDf','value':''},
-				'component':{'name':'backUpTable','table':'transactions'}
-			}
+		 'filename': testFilename,
+		 'operations': {
+		  'readfile': {
+		   'location': 'imports',
+		   'type': 'csv'
+		  },
+		  'getAppAttr': 'importDf',
+		  'dropColumn': 'Memo',
+		  'renameColumn': {
+		   'name': 'Type',
+		   'new': 'Kind'
+		  },
+		  'addColumn': {
+		   'column': 'Imported',
+		   'value': ''
+		  },
+		  'addColumn': {
+		   'column': 'Account',
+		   'value': ''
+		  },
+		  'addColumn': {
+		   'column': 'Reviewed',
+		   'value': ''
+		  },
+		  'addColumn': {
+		   'column': 'Expense',
+		   'value': ''
+		  },
+		  'setAppAttr': {
+		   'attr': 'importDf',
+		   'value': ''
+		  },
+		  'component': {
+		   'name': 'backUpTable',
+		   'table': 'transactions'
+		  }
+		 }
 		}
-		
 
 		#self.execAppFeatureOperations(args)
-
 
 		# OPERATION - readfile
 		extension = testFilename.split(".")
@@ -1481,7 +1343,7 @@ class Finances(Application):
 		# OPERATION - dropColumn
 		print('drop')
 		df.drop('Memo', axis=1, inplace=True)
-		
+
 		# OPERATION - renameColumn
 		print('rename')
 		df.rename(columns={'Type': 'Kind'}, inplace=True)
@@ -1501,18 +1363,16 @@ class Finances(Application):
 		self.importDf = df
 
 		# OPERATION - component: backupTable
-		compArgs = {'table':'transactions'}
+		compArgs = {'table': 'transactions'}
 		self.core.backupTable(compArgs)
 
 		# trigger import
 		self.performImport()
 
-
 	## END method ----------------------
 
 	def creditImportMacroSapphire(self):
 		print('creditImportMacroSapphire()')
-
 
 		testFilename = 'Chase9901.CSV'
 		extension = testFilename.split(".")
@@ -1530,7 +1390,7 @@ class Finances(Application):
 		# drop memo
 		print('drop')
 		df.drop('Memo', axis=1, inplace=True)
-		
+
 		print('rename')
 		df.rename(columns={'Type': 'Kind'}, inplace=True)
 
@@ -1549,7 +1409,6 @@ class Finances(Application):
 		# trigger import
 		self.performImport()
 
-
 	## END method ----------------------
 
 	def mechanicsImportMacro(self):
@@ -1561,7 +1420,7 @@ class Finances(Application):
 
 		location = f'imports/{testFilename}'
 		print(f'location: {location}')
-		
+
 		with open(location, "r+") as f:
 			lines = f.readlines()
 			f.seek(0)
@@ -1571,7 +1430,7 @@ class Finances(Application):
 					print(f'{number}: {line}')
 					f.write(line)
 			f.truncate()
-			
+
 		# load by extension type
 		self.importDf = pd.read_csv(location)
 		print(self.importDf.columns)
@@ -1602,16 +1461,12 @@ class Finances(Application):
 		print('drop')
 
 		dropList = [
-			'Transaction Number', 
-			'Memo', 
-			'Balance', 
-			'Check Number', 
-			'Amount Debit', 
-			'Amount Credit', 
-			'Fees  ']
+		 'Transaction Number', 'Memo', 'Balance', 'Check Number', 'Amount Debit',
+		 'Amount Credit', 'Fees  '
+		]
 
 		# loop through list, if exists, drop
-		df = self.core.dropColumns(df,dropList)
+		df = self.core.dropColumns(df, dropList)
 		#df.drop(dropList, axis=1, inplace=True)
 
 		print(df)
@@ -1622,88 +1477,80 @@ class Finances(Application):
 		# trigger import
 		self.performImport()
 
-
 	## END method ----------------------
 
 	def snippet(self):
 		print('snippet()')
-		
-		
+
 		argsDict = {
-		    "operations": [
-		        {
-		            # "key": 1,
-		            "getSettingsDict": {
-					    "appName":"self.appName"
-				    }
-		        },
-		        {
-		            # "key": 2,
-		            "getUserInput": {
-		                "returnType":"str",
-		                "message":"Enter filter (2022-XX): ",
-		                "valueName":"value"
-		            }
-		        },
-		        {
-		            # "key": 3,
-		            "saveSetting": {
-		                "appName":"self.appName",
-		                "settingName":"dateFilter"
-				    }
-		        },
-		        {
-		            # "key": 2,
-		            "getUserInput": {
-		                "returnType":"str",
-		                "message":"Enter filter (2022-XX): ",
-		                "valueName":"value"
-		            }
-		        }
-		    ]
+		 "operations": [
+		  {
+		   # "key": 1,
+		   "getSettingsDict": {
+		    "appName": "self.appName"
+		   }
+		  },
+		  {
+		   # "key": 2,
+		   "getUserInput": {
+		    "returnType": "str",
+		    "message": "Enter filter (2022-XX): ",
+		    "valueName": "value"
+		   }
+		  },
+		  {
+		   # "key": 3,
+		   "saveSetting": {
+		    "appName": "self.appName",
+		    "settingName": "dateFilter"
+		   }
+		  },
+		  {
+		   # "key": 2,
+		   "getUserInput": {
+		    "returnType": "str",
+		    "message": "Enter filter (2022-XX): ",
+		    "valueName": "value"
+		   }
+		  }
+		 ]
 		}
 
-		
 		print(json.dumps(argsDict, indent=4))
 		operations = argsDict['operations']
-		
+
 		passDict = {}
-		
+
 		# loop by operations
-			# call components & pass args
+		# call components & pass args
 		for dict in operations:
 			for method, args in dict.items():
 				print(method)
 				print(json.dumps(args, indent=4))
-			
-
 
 	## END method ----------------------
 
-		
-	def execAppFeatureOperations(self,args):
+	def execAppFeatureOperations(self, args):
 		print('execAppFeatureOperations()')
 
 		print(args)
 		print(json.dumps(args, indent=2))
 
 		# loop by operations
-			# call components & pass args
+		# call components & pass args
 
-		compArgs = {'table':'transactions'}
-		
+		compArgs = {'table': 'transactions'}
+
 		#Components = self.core.Components
 		self.core.backupTable(compArgs)
 
-
 	## END method ----------------------
-
 
 	def performImport(self):
 		print('performImport()')
 
 		# --- get import df
-		
+
 		df = self.importDf
 
 		importColumns = df.columns
@@ -1713,7 +1560,7 @@ class Finances(Application):
 		newDf = self.tableDf
 
 		# --- loop df and build records
-		
+
 		for index, row in df.iterrows():
 			print(f'{index}: {row}')
 
@@ -1750,17 +1597,16 @@ class Finances(Application):
 
 		# --- format headers
 		headerDf = self.tableHeaderDf.copy()
-		
+
 		df1 = headerDf.apply(self.formatTableColumn, axis=1)
-		
+
 		# get headers from new df
 		print(self.tableDf.info())
 
 		print(self.tableHeaderDf)
-		
+
 		print(self.tableDf)
 
-		
 		# --- format headers
 		self.core.tableDf = self.tableDf
 		self.core.tableHeaderDf = self.tableHeaderDf
@@ -1772,17 +1618,16 @@ class Finances(Application):
 		print(source)
 
 		filename = f'{source}.xlsx'
-		
+
 		# write new df to file
-		self.core.writeTableDftoFile(filename,self.tableDf,self.tableHeaderDf)
+		self.core.writeTableDftoFile(filename, self.tableDf, self.tableHeaderDf)
 
 		# return to main menu
 		self.promptOptions = self.core.datasetsMethods
 
 		## END method ----------------------
 
-		
-	def formatTableColumn(self,row):
+	def formatTableColumn(self, row):
 		print('formatTableColumn()')
 
 		df = self.tableDf
@@ -1794,18 +1639,18 @@ class Finances(Application):
 		df = df.replace(np.nan, '')
 		df = df.replace('<NA>', '')
 
-		# if 
+		# if
 		if dtype == 'datetime64':
 			print('format to datetime')
 			df[colName] = pd.to_datetime(df[colName])
-		elif  dtype == 'str':
+		elif dtype == 'str':
 			print('format to str')
 			#df[colName] = pd.to_datetime(df[colName])
 			df[colName] = df[colName].astype(str)
-		elif  dtype == 'int':
+		elif dtype == 'int':
 			print('format to int')
 			df[colName] = df[colName].astype(str)
-			df[colName] = df[colName].replace('','0')
+			df[colName] = df[colName].replace('', '0')
 			df[colName] = df[colName].replace('True', '1')
 			df[colName] = df[colName].replace('False', '0')
 
@@ -1813,65 +1658,57 @@ class Finances(Application):
 
 			#df[colName] = pd.to_numeric(df[colName])
 			df[colName] = df[colName].astype(int)
-		elif  dtype == 'number':
+		elif dtype == 'number':
 			print('format to number')
 			#df[colName] = pd.to_datetime(df[colName])
 			#df[colName] = df[colName].astype(str)
 			df[colName] = pd.to_numeric(df[colName])
-		else: 
+		else:
 			print('do nothing')
-		
+
 		self.tableDf = df
-		
+
 	## END method ----------------------
-	
+
+
 ## END Finances Class ======
 
 
-
 class Taxes(Application):
-
 	"""Code Summary
 	check for required tables
  		create tables if need
    	
 	"""
-	
-	def __init__(self,core):
+
+	def __init__(self, core):
 		print('__init__Taxes()')
 
 		self.appName = 'Taxes'
 		self.tableName = 'taxes2022'
 
 		self.core = core
-		
+
 		# init app parent
 		super().__init__()
-		
+
 		# --- STEP
-		
-		filename,df,headersDf = core.loadTableToDf(self.tableName)
+
+		filename, df, headersDf = core.loadTableToDf(self.tableName)
 		self.filename = filename
 		self.tableDf = df
 		self.tableHeaderDf = headersDf
 		print(df.info())
 
-
 		# filename,df,headersDf = core.loadTableToDf('taxes2022')
-		
+
 		# self.filename = filename
 		# self.tableDf = super().formatTable(df,headersDf)
 		# self.tableHeaderDf = headersDf
 
-
-		
 		# --- STEP
-		
-		args = {
-			'base': 'applications',
-			'appName': self.appName,
-			'type': 'features'
-		}
+
+		args = {'base': 'applications', 'appName': self.appName, 'type': 'features'}
 		featureDict = self.core.readDictFromFile(args=args)
 		print(json.dumps(featureDict, indent=2))
 
@@ -1891,52 +1728,42 @@ class Taxes(Application):
 
 		self.appMethods = featureDf[0].squeeze()
 
-		
 		# --- STEP
-		
-		args = {
-			'appName': self.appName
-		}
+
+		args = {'appName': self.appName}
 		print(json.dumps(args, indent=2))
 		self.settingsDict = self.core.readDictFromFile(args=args)
 		print(json.dumps(self.settingsDict, indent=2))
-		
-		
-		
+
 		# optionsList = self.appMethods
 		# # show options
 		# for idx, x in optionsList.items():
 		# 	print(f'{idx}: {x}')
-			
+
 		# # get user method select
 		# messagePrompt = f'select function: '
 		# listIndex = int(input(messagePrompt))
-		
+
 		# objAttribute = optionsList.get(listIndex, '')
 		# print(objAttribute)
 
 		# getattr(self, objAttribute)(df)
 
 		# settings
-		# - dashboard report 
+		# - dashboard report
 		# - metrics
 		# - methods list
-		# - 
+		# -
 
-		
-
-
-		
 	## END INIT method ----------------------
 
-		
 	# ------ getters & setters
-		
+
 	# getter ------
 	@property
 	def appMethods(self):
 		return self._appMethods
-	
+
 	## END method ----------------------
 
 	# setter
@@ -1947,7 +1774,6 @@ class Taxes(Application):
 
 	## END method ----------------------
 
-		
 	def setup(self):
 		print('setup()')
 
@@ -1960,84 +1786,71 @@ class Taxes(Application):
 
 		df = self.tableDf
 
-
 		# ---
 		# make form and line object
 		# get income metric value
 		# assign to class variable by form & line
-			# 
+		#
 		# template spreadsheet
-			# form, line, name, value, value type, calc or reference, description
-			# value type: reference, metric
-		# product report file 
+		# form, line, name, value, value type, calc or reference, description
+		# value type: reference, metric
+		# product report file
 
-
-		
 		args = {
-			'df': self.tableDf,
-			'operations': {
-				'filterBy': {
-					'column':'Expense',
-					'value':'Donation'
-				},
-				#'print':'default', # all, default, []
-				'sum': {
-					'groupColumn':'Expense',
-					'targetColumn':'Amount'
-				}
-			}
+		 'df': self.tableDf,
+		 'operations': {
+		  'filterBy': {
+		   'column': 'Expense',
+		   'value': 'Donation'
+		  },
+		  #'print':'default', # all, default, []
+		  'sum': {
+		   'groupColumn': 'Expense',
+		   'targetColumn': 'Amount'
+		  }
+		 }
 		}
-		
-		
 
 		#df = self.core.execAppFeatureOperations(args)
 		#print(df)
 
-		
 		argsDict = {
-			'operations': [
-				{
-					'filterBy': {
-						'column':'Expense',
-						'value':'Donation'
-					}
-				},
-				{
-					'sum': {
-						'groupColumn':'Expense',
-						'targetColumn':'Amount'
-					}
-				}
-			]
+		 'operations': [{
+		  'filterBy': {
+		   'column': 'Expense',
+		   'value': 'Donation'
+		  }
+		 }, {
+		  'sum': {
+		   'groupColumn': 'Expense',
+		   'targetColumn': 'Amount'
+		  }
+		 }]
 		}
-		
-		
 
-		df,passDict = self.core.execAppFeatureOperations(df=df,argsDict=argsDict)
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 		#print(df.head())
 		print(json.dumps(passDict, indent=2))
-		
+
 	## END method ----------------------
-		
-		
+
 	def selectYear(self):
 		print(f'selectYear()')
 
 		# pick year & get dataframe by 'taxes'{year}'.xlsx'
-		
 
 	## END method ----------------------
-		
+
 	def viewTable(self):
 		print('viewTable()')
-		
+
 		df = self.tableDf
-		
+
 		UI = self.core.UI
-		UI.printFormattedTable(self,df,self.core.getTableDefaultHeaders())
+		UI.printFormattedTable(self, df, self.core.getTableDefaultHeaders())
 
 	## END method ----------------------
-		
+
 	def viewReport(self):
 		print('viewReport()')
 
@@ -2045,52 +1858,45 @@ class Taxes(Application):
 
 		# test REF, calc, report
 
-		
-
 	## END method ----------------------
-		
+
 	def totalIncome(self):
 		print('totalIncome()')
 
 		df = self.tableDf
-		
+
 		df = df.loc[df['Reviewed'] == 1]
 		df = df.loc[df['Expense'] == "Income"]
-		
+
 		#df = df[df['Transaction Date'].dt.strftime('%Y') == 2022]
 		print(df)
 
 		groupDf = df.groupby('Account')['Amount'].sum()
 		print(groupDf)
 
-
 		# df, grouping column, target column, method
-		# 
+		#
 
 		# save this as a metric in the app, make accessable by other other apps
 		codeStr = """print(df.groupby('Account')['Amount'].sum())"""
-  			
+
 		#exec(codeStr)
 
 		# name, df, grouping column, target column, method
 		params = {
-			 'name': 'totalIncomeByYear',
-			 'transformations': [
-				 """df.loc[df['Reviewed'] == 1]"""
-				 """df.loc[df['Expense'] == "Income"]"""
-				 """print(df.groupby('Account')['Amount'].sum())"""
-				 ],
-			 'dtype': 'int'
+		 'name':
+		 'totalIncomeByYear',
+		 'transformations': [
+		  """df.loc[df['Reviewed'] == 1]"""
+		  """df.loc[df['Expense'] == "Income"]"""
+		  """print(df.groupby('Account')['Amount'].sum())"""
+		 ],
+		 'dtype':
+		 'int'
 		}
 		#super().defineMetric(params)
-		
 
 	## END method ----------------------
 
 
-		
-		
 ## END Taxes Class ======
-
-
-
