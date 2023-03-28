@@ -153,26 +153,9 @@ class stocks(Application):
 
 		df = self.tableDf
 
-		
-		argsDict = {
-		 'operations':
-		 [{
-		  'getSettingByName': {
-		   'appName': self.appName,
-		   'settingName': 'dateFilter'
-		  }
-		 }, {
-		  'filterByDate': {
-		   'column': 'Transaction Date',
-		   'format': '%Y-%m'
-		  }
-		 }
-		  ]
-		}
+		argsDict = {'operations': [{'printReportTable': {'headerSet': 'default'}}]}
 
-		# df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
-		# self.tableDf = df
-		# print(json.dumps(passDict, indent=2))
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
 
 		UI = self.core.UI
 		UI.printFormattedTable(self, df, self.core.getTableDefaultHeaders())
@@ -184,71 +167,61 @@ class stocks(Application):
 
 		df = self.tableDf
 
-		
 		argsDict = {
-		 'operations':
-		 [{
-		  'getSettingByName': {
-		   'appName': self.appName,
-		   'settingName': 'dateFilter'
+		 'operations': [{
+		  'formatColumn': {
+		   'dataType': 'numeric',
+		   'column': 'price'
 		  }
 		 }, {
-		  'filterByDate': {
-		   'column': 'Transaction Date',
-		   'format': '%Y-%m'
+		  'formatColumn': {
+		   'dataType': 'numeric',
+		   'column': 'Mkt Value'
 		  }
-		 }
-		  ]
+		 }]
 		}
 
-		# df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
-		# self.tableDf = df
-		# print(json.dumps(passDict, indent=2))
-		
-		# --- STEP
-		
-		# --- copy df
-		reportDf = df.copy()
-		print(reportDf)
+		df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
+		#print(df.head())
+		#print(json.dumps(passDict, indent=2))
+		#df, passDict = self.core.execAppFeatureOperations(df=df, argsDict=argsDict)
+		#self.tableDf = df
+		#print(json.dumps(passDict, indent=2))
 
-		
+		# --- STEP
+
+		# --- copy df
+		# reportDf = df.copy()
+		# print(reportDf)
+
 		# --- STEP - format column
 
 		# --- add report columns
-		reportDf['price'] = pd.to_numeric(0)
-		reportDf['Mkt Value'] = pd.to_numeric(0)
+		#df['price'] = pd.to_numeric(0)
+		#df['Mkt Value'] = pd.to_numeric(0)
 		#print(reportDf.head())
 
-		
 		# --- STEP - apply function
 
 		# get price from yahoo
-		reportDf['price'] = reportDf.apply(self.getPricebySymbol, axis=1)
+		df['price'] = df.apply(self.getPricebySymbol, axis=1)
 
-		
 		# --- STEP - transform - multiply & new column
 
 		# # calculate market value
-		reportDf['Mkt Value'] = np.multiply(pd.to_numeric(reportDf["qty"]),
-		                                    reportDf['price'])
+		df['Mkt Value'] = np.multiply(pd.to_numeric(df["qty"]), df['price'])
 
-		
-		# --- STEP - calc metric 
+		# --- STEP - calc metric
 
 		# # -- calculate metric
-		positionTotalValue = reportDf["Mkt Value"].sum()
+		positionTotalValue = df["Mkt Value"].sum()
 		print(f'Total Mkt Value: {positionTotalValue}')
 
-		
 		# --- STEP - print report
 
-		
 		# # -- print report
 		UI = self.core.UI
-		UI.printFormattedTable(self, reportDf,
-		                       ['symbol', 'qty', 'price', 'Mkt Value'])
-
-		
+		UI.printFormattedTable(self, df, ['symbol', 'qty', 'price', 'Mkt Value'])
 
 	## END method ----------------------
 
